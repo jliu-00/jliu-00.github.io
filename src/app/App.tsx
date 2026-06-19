@@ -121,25 +121,25 @@ export default function App() {
 
         {/* Kinetic Orbital Toy (Self-floating, interactive geometry) */}
         <motion.div
-          animate={{
-            y: [0, -30, 15, 0],
-            x: [0, 20, -10, 0],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          className="absolute left-[8%] top-[10%] md:left-[12%] md:top-[15%] z-50"
+          drag
+          dragConstraints={ref}
+          dragElastic={0.2}
+          dragTransition={{ bounceStiffness: 400, bounceDamping: 30, power: 0.2 }}
+          whileHover={{ scale: 1.3 }}
+          whileDrag={{ scale: 0.9, cursor: "grabbing" }}
+          className="absolute left-[8%] top-[10%] md:left-[12%] md:top-[15%] z-50 flex h-24 w-24 cursor-grab items-center justify-center md:h-32 md:w-32"
         >
           <motion.div
-            drag
-            dragConstraints={ref}
-            dragElastic={0.2}
-            dragTransition={{ bounceStiffness: 400, bounceDamping: 30, power: 0.2 }}
-            whileHover={{ scale: 1.3 }}
-            whileDrag={{ scale: 0.9, cursor: "grabbing" }}
-            className="flex h-24 w-24 cursor-grab items-center justify-center md:h-32 md:w-32"
+            animate={{
+              y: [0, -30, 15, 0],
+              x: [0, 20, -10, 0],
+            }}
+            transition={{
+              duration: 10,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="relative flex h-full w-full items-center justify-center"
           >
             {/* Solid Core */}
             <div className="h-3 w-3 rounded-full bg-foreground shadow-[0_0_15px_rgba(255,255,255,0.3)]" />
