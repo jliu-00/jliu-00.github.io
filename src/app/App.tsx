@@ -19,13 +19,29 @@ export default function App() {
 
   // Global Spotlight Tracker
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
-      document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
+    const handleMove = (e: MouseEvent | TouchEvent) => {
+      let clientX, clientY;
+      if ('touches' in e) {
+        if (e.touches.length > 0) {
+          clientX = e.touches[0].clientX;
+          clientY = e.touches[0].clientY;
+        } else {
+          return;
+        }
+      } else {
+        clientX = (e as MouseEvent).clientX;
+        clientY = (e as MouseEvent).clientY;
+      }
+      document.documentElement.style.setProperty('--mouse-x', `${clientX}px`);
+      document.documentElement.style.setProperty('--mouse-y', `${clientY}px`);
     };
     
-    window.addEventListener("mousemove", handleMouseMove, { passive: true });
-    return () => window.removeEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mousemove", handleMove, { passive: true });
+    window.addEventListener("touchmove", handleMove, { passive: true });
+    return () => {
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("touchmove", handleMove);
+    };
   }, []);
 
   const { scrollYProgress } = useScroll();
@@ -52,7 +68,7 @@ export default function App() {
           data-cursor={dark ? "Light" : "Dark"}
           onClick={() => setDark((d) => !d)}
           aria-label="Toggle theme"
-          className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full border border-foreground/25 transition-colors hover:bg-foreground hover:text-background"
+          className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full border border-foreground/25 transition-colors hover:bg-foreground hover:text-background active:scale-90"
         >
           {dark ? <Sun size={16} /> : <Moon size={16} />}
         </button>
@@ -85,6 +101,7 @@ export default function App() {
           <motion.div
             style={{ y: baseImgY, zIndex: 1 }}
             whileHover={{ scale: 1.03, rotate: 3 }}
+            whileTap={{ scale: 0.95, rotate: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
             className="absolute right-[5%] top-0 w-[65%] md:right-0 md:w-[50%] pointer-events-auto cursor-pointer origin-bottom-right"
           >
@@ -103,6 +120,7 @@ export default function App() {
           <motion.div
             style={{ y: overlayImgY, zIndex: 2 }}
             whileHover={{ scale: 1.03, rotate: -2, zIndex: 20 }}
+            whileTap={{ scale: 0.95, rotate: 0, zIndex: 20 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
             className="absolute bottom-[5%] left-[5%] w-[85%] md:bottom-[15%] md:left-[-30%] md:w-[85%] pointer-events-auto cursor-pointer origin-bottom-left"
           >
@@ -222,7 +240,7 @@ export default function App() {
             target="_blank"
             rel="noopener noreferrer"
             data-cursor="Connect"
-            className="font-serif tracking-[-0.02em] transition-colors hover:text-accent"
+            className="font-serif tracking-[-0.02em] transition-colors hover:text-accent active:text-accent active:scale-95 origin-left inline-block"
             style={{ fontSize: "clamp(2rem, 6vw, 4.5rem)", fontWeight: 300 }}
           >
             Let's connect ↗
