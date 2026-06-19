@@ -62,6 +62,8 @@ export function MagneticPin({ href, label, icon, tilt = 0, className = "" }: Mag
   const anchorX = useTransform(x, (v) => 29 - v);
   const anchorY = useTransform(y, (v) => -28 - v);
 
+  const isTouchDevice = typeof window !== 'undefined' && window.matchMedia("(pointer: coarse)").matches;
+
   return (
     <motion.a
       ref={ref}
@@ -72,7 +74,7 @@ export function MagneticPin({ href, label, icon, tilt = 0, className = "" }: Mag
       aria-label={label}
       onMouseEnter={() => setActive(true)}
       onMouseLeave={() => setActive(false)}
-      drag
+      drag={!isTouchDevice}
       dragConstraints={{ top: 0, left: 0, right: 0, bottom: 0 }}
       dragElastic={0.6}
       dragTransition={{ bounceStiffness: 400, bounceDamping: 10 }}
