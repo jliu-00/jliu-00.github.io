@@ -334,7 +334,7 @@ export default function App() {
           <MagneticPin href="https://www.instagram.com/j.liu429/" label="Instagram" icon={<Instagram size={18} />} tilt={-5} />
         </motion.div>
         <motion.div style={{ y: buttonsY }} className="absolute right-[5%] top-[86%] z-30 md:right-[5%] md:top-[80%]">
-          <MagneticPin href="https://xhslink.com/m/HRcSCfqVjo" label="小红书" icon={<XiaohongshuIcon size={18} />} tilt={10} />
+          <MagneticPin href="https://xhslink.com/m/HRcSCfqVjo" label="RedNote" icon={<XiaohongshuIcon size={18} />} tilt={10} />
         </motion.div>
 
         {/* scroll indicator */}

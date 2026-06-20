@@ -170,7 +170,7 @@ export function MagneticPin({ href, label, icon, tilt = 0, className = "", x: in
             x: gyroX,
             y: gyroY,
             rotate: tilt,
-            background: "radial-gradient(120% 120% at 32% 28%, #ECE5DC 0%, #CFC6BA 45%, #A89E90 100%)",
+            background: "radial-gradient(120% 120% at 32% 28%, var(--pin-grad-1) 0%, var(--pin-grad-2) 45%, var(--pin-grad-3) 100%)",
             boxShadow: dynamicBoxShadow,
           }}
         >
@@ -179,14 +179,14 @@ export function MagneticPin({ href, label, icon, tilt = 0, className = "", x: in
             className="absolute inset-[3px] rounded-full"
             style={{
               background:
-                "repeating-conic-gradient(from 0deg, rgba(45,41,38,0.16) 0deg 4deg, transparent 4deg 8deg)",
+                "repeating-conic-gradient(from 0deg, var(--pin-bezel) 0deg 4deg, transparent 4deg 8deg)",
               WebkitMaskImage:
                 "radial-gradient(transparent 64%, #000 65%, #000 78%, transparent 79%)",
               maskImage:
                 "radial-gradient(transparent 64%, #000 65%, #000 78%, transparent 79%)",
             }}
           />
-          <span className="relative z-10 text-[#2D2926] transition-transform duration-300 group-hover:scale-110">
+          <span className="relative z-10 text-foreground transition-transform duration-300 group-hover:scale-110">
             {icon}
           </span>
         </motion.span>

@@ -39,6 +39,10 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --pin-grad-1: #ECE5DC;
+  --pin-grad-2: #CFC6BA;
+  --pin-grad-3: #A89E90;
+  --pin-bezel: rgba(45, 41, 38, 0.16);
 }
 
 .dark {
@@ -76,6 +80,10 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.269 0 0);
   --sidebar-ring: oklch(0.439 0 0);
+  --pin-grad-1: #2C3035;
+  --pin-grad-2: #1C2024;
+  --pin-grad-3: #0A0C0E;
+  --pin-bezel: rgba(236, 239, 241, 0.16);
 }
 
 @theme inline {
