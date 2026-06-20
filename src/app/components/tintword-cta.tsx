@@ -20,7 +20,7 @@ export function TintWordCTA() {
   const textShadow = useMotionTemplate`0px 10px 80px ${auraColor}, 0px 2px 20px ${auraColor}`;
 
   return (
-    <section className="relative mx-auto w-full max-w-[1400px] px-6 py-[18vh] md:px-16">
+    <section className="relative mx-auto w-full max-w-[1400px] px-6 pt-[6vh] pb-[18vh] md:py-[18vh] md:px-16">
       <motion.div
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}

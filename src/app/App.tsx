@@ -110,7 +110,9 @@ export default function App() {
     };
   }, []);
 
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
@@ -230,7 +232,7 @@ export default function App() {
               
               {/* Overlay Particle Image for interaction - expanded bounds to let particles fly! */}
               <div 
-                className={`absolute ${isMobile ? 'inset-[-150%]' : 'inset-[-300%]'} z-0 transition-opacity duration-300 ease-in-out pointer-events-none ${isBaseShattering ? 'opacity-100' : 'opacity-0'}`}
+                className={`absolute inset-[-150%] md:inset-[-300%] z-0 transition-opacity duration-300 ease-in-out pointer-events-none ${isBaseShattering ? 'opacity-100' : 'opacity-0'}`}
               >
                 <Canvas style={{ pointerEvents: 'none' }} dpr={[1, 1.5]} camera={{ position: [0, 0, 35], fov: 50 }} gl={{ powerPreference: "high-performance", antialias: false }}>
                   <Suspense fallback={null}>
@@ -239,7 +241,7 @@ export default function App() {
                       width={4.2}
                       height={5.6}
                       scale={isMobile ? 1.457 : 0.833}
-                      density={100}
+                      density={isMobile ? 70 : 100}
                       onSettled={handleParticleSettled}
                     />
                   </Suspense>
@@ -267,7 +269,7 @@ export default function App() {
                 className={`absolute inset-0 h-full w-full object-cover rounded-[2rem] transition-opacity duration-300 ease-in-out ${isOverlayShattering ? 'opacity-0' : 'opacity-100'}`}
               />
               <div 
-                className={`absolute ${isMobile ? 'inset-[-150%]' : 'inset-[-300%]'} z-0 transition-opacity duration-300 ease-in-out pointer-events-none ${isOverlayShattering ? 'opacity-100' : 'opacity-0'}`}
+                className={`absolute inset-[-150%] md:inset-[-300%] z-0 transition-opacity duration-300 ease-in-out pointer-events-none ${isOverlayShattering ? 'opacity-100' : 'opacity-0'}`}
               >
                 <Canvas style={{ pointerEvents: 'none' }} dpr={[1, 1.5]} camera={{ position: [0, 0, 35], fov: 50 }} gl={{ powerPreference: "high-performance", antialias: false }}>
                   <Suspense fallback={null}>
@@ -276,7 +278,7 @@ export default function App() {
                       width={5.6}
                       height={4.2}
                       scale={isMobile ? 1.943 : 1.11}
-                      density={100}
+                      density={isMobile ? 70 : 100}
                       onSettled={handleParticleSettled}
                     />
                   </Suspense>
@@ -355,16 +357,16 @@ export default function App() {
         </motion.div>
 
         {/* scattered social pins (not boxed) - moving slower than background to stay on screen longer */}
-        <motion.div style={{ y: buttonsY }} className="absolute left-[8%] top-[72%] z-30 md:left-[6%] md:top-[64%]">
+        <motion.div style={{ y: buttonsY }} className="absolute left-[2%] top-[72%] z-30 md:left-[6%] md:top-[64%]">
           <MagneticPin href="https://github.com/jliu-00" label="GitHub" icon={<Github size={18} />} tilt={-8} />
         </motion.div>
-        <motion.div style={{ y: buttonsY }} className="absolute left-[28%] top-[82%] z-30 md:left-[30%] md:top-[74%]">
+        <motion.div style={{ y: buttonsY }} className="absolute left-[20%] top-[82%] z-30 md:left-[30%] md:top-[74%]">
           <MagneticPin href="https://www.linkedin.com/in/jiahong-liu-27a456174/" label="LinkedIn" icon={<Linkedin size={18} />} tilt={6} />
         </motion.div>
-        <motion.div style={{ y: buttonsY }} className="absolute right-[25%] top-[74%] z-30 md:right-[28%] md:top-[78%]">
+        <motion.div style={{ y: buttonsY }} className="absolute right-[33%] top-[74%] z-30 md:right-[28%] md:top-[78%]">
           <MagneticPin href="https://www.instagram.com/j.liu429/" label="Instagram" icon={<Instagram size={18} />} tilt={-5} />
         </motion.div>
-        <motion.div style={{ y: buttonsY }} className="absolute right-[16%] top-[88%] z-30 md:right-[12%] md:top-[84%]">
+        <motion.div style={{ y: buttonsY }} className="absolute right-[26%] top-[88%] z-30 md:right-[12%] md:top-[84%]">
           <MagneticPin href="https://xhslink.com/m/HRcSCfqVjo" label="RedNote" icon={<XiaohongshuIcon size={18} />} tilt={10} />
         </motion.div>
 
