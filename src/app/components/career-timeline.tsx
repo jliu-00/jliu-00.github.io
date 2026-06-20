@@ -278,7 +278,7 @@ export function CareerTimeline() {
 
         {/* read-out — stable centered block in normal flow, never edge-squeezed.
             Reserves its own height so it can't collide with the footer. */}
-        <div className="pointer-events-none relative mt-9 flex min-h-[112px] items-start justify-center">
+        <div className="pointer-events-none relative mt-9 flex min-h-[280px] md:min-h-[180px] items-start justify-center">
           <AnimatePresence>
             {active && liveEntries.length > 0 ? (
               <motion.div
