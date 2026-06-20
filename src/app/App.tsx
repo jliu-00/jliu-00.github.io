@@ -127,6 +127,8 @@ export default function App() {
   }, []);
 
   const cFactor = deviceType === 'mobile' ? 3 : deviceType === 'tablet' ? 5 : 7;
+  // inset % = -((cFactor - 1) / 2) * 100
+  const insetPercent = -((cFactor - 1) / 2) * 100;
 
   const { scrollYProgress } = useScroll();
   const rawVelocity = useVelocity(scrollYProgress);
@@ -240,7 +242,8 @@ export default function App() {
               
               {/* Overlay Particle Image for interaction - expanded bounds to let particles fly! */}
               <div 
-                className={`absolute inset-[-100%] md:inset-[-200%] lg:inset-[-300%] z-0 transition-opacity duration-300 ease-in-out pointer-events-none ${isBaseShattering ? 'opacity-100' : 'opacity-0'}`}
+                className={`absolute z-0 transition-opacity duration-300 ease-in-out pointer-events-none ${isBaseShattering ? 'opacity-100' : 'opacity-0'}`}
+                style={{ top: `${insetPercent}%`, bottom: `${insetPercent}%`, left: `${insetPercent}%`, right: `${insetPercent}%` }}
               >
                 <Canvas frameloop={isCanvasVisible ? "always" : "demand"} style={{ pointerEvents: 'none' }} dpr={deviceType === 'desktop' ? [1, 1.5] : 1} camera={{ position: [0, 0, 35], fov: 50 }} gl={{ powerPreference: "high-performance", antialias: false }}>
                   <Suspense fallback={null}>
@@ -248,7 +251,7 @@ export default function App() {
                       src={HERO_IMG}
                       width={4.2}
                       height={5.6}
-                      scale={5.821 / cFactor}
+                      scale={5.82875 / cFactor}
                       density={deviceType === 'mobile' ? 70 : 100}
                       onSettled={handleParticleSettled}
                     />
@@ -277,7 +280,8 @@ export default function App() {
                 className={`absolute inset-0 h-full w-full object-cover rounded-[2rem] transition-opacity duration-300 ease-in-out ${isOverlayShattering ? 'opacity-0' : 'opacity-100'}`}
               />
               <div 
-                className={`absolute inset-[-100%] md:inset-[-200%] lg:inset-[-300%] z-0 transition-opacity duration-300 ease-in-out pointer-events-none ${isOverlayShattering ? 'opacity-100' : 'opacity-0'}`}
+                className={`absolute z-0 transition-opacity duration-300 ease-in-out pointer-events-none ${isOverlayShattering ? 'opacity-100' : 'opacity-0'}`}
+                style={{ top: `${insetPercent}%`, bottom: `${insetPercent}%`, left: `${insetPercent}%`, right: `${insetPercent}%` }}
               >
                 <Canvas frameloop={isCanvasVisible ? "always" : "demand"} style={{ pointerEvents: 'none' }} dpr={deviceType === 'desktop' ? [1, 1.5] : 1} camera={{ position: [0, 0, 35], fov: 50 }} gl={{ powerPreference: "high-performance", antialias: false }}>
                   <Suspense fallback={null}>
@@ -285,7 +289,7 @@ export default function App() {
                       src="/IG.jpg"
                       width={5.6}
                       height={4.2}
-                      scale={7.761 / cFactor}
+                      scale={7.77166 / cFactor}
                       density={deviceType === 'mobile' ? 70 : 100}
                       onSettled={handleParticleSettled}
                     />
