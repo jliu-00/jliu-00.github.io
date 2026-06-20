@@ -10,6 +10,14 @@
     
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <style>html, body { height: 100%; margin: 0; } #root { height: 100%; }</style>
+    <script>
+      (function() {
+        try {
+          var isDark = localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (isDark) document.documentElement.classList.add('dark');
+        } catch (e) {}
+      })();
+    </script>
   </head>
 
     <body>

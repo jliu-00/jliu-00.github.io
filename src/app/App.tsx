@@ -13,15 +13,35 @@ import { ImageWithFallback } from "./components/figma/ImageWithFallback";
 
 const HERO_IMG = "/Profie.jpg";
 export default function App() {
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = window.localStorage.getItem('theme');
+      if (stored === 'dark') return true;
+      if (stored === 'light') return false;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
+  });
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
   }, [dark]);
 
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e: MediaQueryListEvent) => {
+      if (!window.localStorage.getItem('theme')) {
+        setDark(e.matches);
+      }
+    };
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
   const toggleDark = (e: React.MouseEvent) => {
     const isDark = !dark;
+    window.localStorage.setItem("theme", isDark ? "dark" : "light");
     
     if (!document.startViewTransition) {
       setDark(isDark);
