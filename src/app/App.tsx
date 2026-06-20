@@ -325,7 +325,7 @@ export default function App() {
         </motion.div>
 
         {/* scattered social pins (not boxed) - moving slower than background to stay on screen longer */}
-        <motion.div style={{ y: buttonsY }} className="absolute left-[12%] top-[68%] z-30 md:left-[15%] md:top-[58%]">
+        <motion.div style={{ y: buttonsY }} className="absolute left-[8%] top-[72%] z-30 md:left-[6%] md:top-[64%]">
           <MagneticPin href="https://github.com/jliu-00" label="GitHub" icon={<Github size={18} />} tilt={-8} />
         </motion.div>
         <motion.div style={{ y: buttonsY }} className="absolute left-[28%] top-[82%] z-30 md:left-[30%] md:top-[74%]">
