@@ -252,6 +252,7 @@ export default function App() {
                       width={4.2}
                       height={5.6}
                       scale={5.82875 / cFactor}
+                      enableHover={deviceType === 'desktop'}
                       density={deviceType === 'mobile' ? 70 : 100}
                       onSettled={handleParticleSettled}
                     />
@@ -290,6 +291,7 @@ export default function App() {
                       width={5.6}
                       height={4.2}
                       scale={7.77166 / cFactor}
+                      enableHover={deviceType === 'desktop'}
                       density={deviceType === 'mobile' ? 70 : 100}
                       onSettled={handleParticleSettled}
                     />

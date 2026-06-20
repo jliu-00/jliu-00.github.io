@@ -41,6 +41,11 @@ void main() {
   float eased = 1.0 - pp * pp * pp;
   float convergeFactor = 1.0 - eased;
   
+  // Guarantee absolute zero offset on all GPU backends when fully converged
+  if (uConverge >= 0.999) {
+    convergeFactor = 0.0;
+  }
+  
   vConvergeFactor = convergeFactor;
   
   // Mouse repel - fade out as we converge so they lock into place perfectly
@@ -145,10 +150,11 @@ interface ParticleImageProps {
   height?: number;
   density?: number;
   scale?: number;
+  enableHover?: boolean;
   onSettled?: () => void;
 }
 
-export function ParticleImage({ src, width = 4, height = 5, density = 500, scale = 1, onSettled }: ParticleImageProps) {
+export function ParticleImage({ src, width = 4, height = 5, density = 500, scale = 1, enableHover = true, onSettled }: ParticleImageProps) {
   useTexture.preload(src);
   const texture = useTexture(src);
   const shaderRef = useRef<THREE.ShaderMaterial>(null);
@@ -263,8 +269,13 @@ export function ParticleImage({ src, width = 4, height = 5, density = 500, scale
     }
   });
 
+  const pointerProps = enableHover ? {
+    onPointerOver: () => setHovered(true),
+    onPointerOut: () => setHovered(false)
+  } : {};
+
   return (
-    <points scale={scale} onPointerOver={() => setHovered(true)} onPointerOut={() => setHovered(false)}>
+    <points scale={scale} {...pointerProps}>
       <planeGeometry args={[width, height, density, Math.floor(density * (height / width))]} />
       <shaderMaterial
         ref={shaderRef}
