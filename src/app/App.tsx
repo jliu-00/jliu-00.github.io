@@ -110,6 +110,14 @@ export default function App() {
     };
   }, []);
 
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const { scrollYProgress } = useScroll();
   const rawVelocity = useVelocity(scrollYProgress);
   const smoothVelocity = useSpring(rawVelocity, {
@@ -222,7 +230,7 @@ export default function App() {
               
               {/* Overlay Particle Image for interaction - expanded bounds to let particles fly! */}
               <div 
-                className={`absolute inset-[-300%] z-0 transition-opacity duration-300 ease-in-out pointer-events-none ${isBaseShattering ? 'opacity-100' : 'opacity-0'}`}
+                className={`absolute ${isMobile ? 'inset-[-150%]' : 'inset-[-300%]'} z-0 transition-opacity duration-300 ease-in-out pointer-events-none ${isBaseShattering ? 'opacity-100' : 'opacity-0'}`}
               >
                 <Canvas style={{ pointerEvents: 'none' }} dpr={[1, 1.5]} camera={{ position: [0, 0, 35], fov: 50 }} gl={{ powerPreference: "high-performance", antialias: false }}>
                   <Suspense fallback={null}>
@@ -230,7 +238,8 @@ export default function App() {
                       src={HERO_IMG} 
                       width={4.2}
                       height={5.6}
-                      scale={0.833}
+                      scale={isMobile ? 1.457 : 0.833}
+                      density={isMobile ? 150 : 250}
                       onSettled={handleParticleSettled}
                     />
                   </Suspense>
@@ -258,7 +267,7 @@ export default function App() {
                 className={`absolute inset-0 h-full w-full object-cover rounded-[2rem] transition-opacity duration-300 ease-in-out ${isOverlayShattering ? 'opacity-0' : 'opacity-100'}`}
               />
               <div 
-                className={`absolute inset-[-300%] z-0 transition-opacity duration-300 ease-in-out pointer-events-none ${isOverlayShattering ? 'opacity-100' : 'opacity-0'}`}
+                className={`absolute ${isMobile ? 'inset-[-150%]' : 'inset-[-300%]'} z-0 transition-opacity duration-300 ease-in-out pointer-events-none ${isOverlayShattering ? 'opacity-100' : 'opacity-0'}`}
               >
                 <Canvas style={{ pointerEvents: 'none' }} dpr={[1, 1.5]} camera={{ position: [0, 0, 35], fov: 50 }} gl={{ powerPreference: "high-performance", antialias: false }}>
                   <Suspense fallback={null}>
@@ -266,7 +275,8 @@ export default function App() {
                       src="/IG.jpg" 
                       width={5.6}
                       height={4.2}
-                      scale={1.11}
+                      scale={isMobile ? 1.943 : 1.11}
+                      density={isMobile ? 150 : 250}
                       onSettled={handleParticleSettled}
                     />
                   </Suspense>
@@ -388,7 +398,7 @@ export default function App() {
             rel="noopener noreferrer"
             data-cursor="Connect"
             onTouchStart={() => {}}
-            className="font-serif tracking-[-0.02em] transition-colors hover:text-accent active:text-accent active:scale-95 origin-left inline-block"
+            className="font-serif tracking-[-0.02em] transition-all duration-300 hover:text-accent active:text-accent active:scale-95 origin-left inline-block"
             style={{ fontSize: "clamp(2rem, 6vw, 4.5rem)", fontWeight: 300 }}
           >
             Let's connect ↗

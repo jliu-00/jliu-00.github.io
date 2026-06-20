@@ -11,6 +11,7 @@ uniform float uScrollVelocity;
 uniform float uConverge;
 uniform vec2 uMouse;
 uniform vec2 uUvScale;
+uniform float uDensity;
 
 varying vec2 vUv;
 varying vec2 vOriginalUv;
@@ -85,8 +86,8 @@ void main() {
   vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
   
   // --- Point size ---
-  // Converged: uniform size for seamless image reconstruction
-  float convergedSize = 75.0;
+  // Converged: uniform size for seamless image reconstruction. Scale dynamically based on density.
+  float convergedSize = 75.0 * (500.0 / uDensity);
   // Scattered: pinpoint stars (mostly tiny, rare bright)
   float scatteredSize = mix(5.0, 80.0, starBrightness);
   
@@ -153,7 +154,10 @@ export function ParticleImage({ src, width = 4, height = 5, density = 500, scale
   const shaderRef = useRef<THREE.ShaderMaterial>(null);
   const [hovered, setHovered] = useState(false);
   
-  const uniforms = useMemo(() => {
+  // Store uniforms in a ref so they are NEVER recreated on re-renders (like dark mode toggles)
+  // which would reset uConverge back to 0 and cause teleports.
+  const uniformsRef = useRef<any>(null);
+  if (!uniformsRef.current) {
     let uvScaleX = 1;
     let uvScaleY = 1;
     if (texture.image) {
@@ -166,16 +170,25 @@ export function ParticleImage({ src, width = 4, height = 5, density = 500, scale
       }
     }
     
-    return {
+    uniformsRef.current = {
       uTime: { value: 0 },
       uScrollVelocity: { value: 0 },
-      uConverge: { value: 0 },
+      uConverge: { value: 0 }, // starts scattered (0) until scroll stops
       uMouse: { value: new THREE.Vector2(999.0, 999.0) },
       uTexture: { value: texture },
       uUvScale: { value: new THREE.Vector2(uvScaleX, uvScaleY) },
-      uPlaneRatio: { value: new THREE.Vector2(width, height) }
+      uPlaneRatio: { value: new THREE.Vector2(width, height) },
+      uDensity: { value: density }
     };
-  }, [texture, width, height]);
+  }
+  const uniforms = uniformsRef.current;
+  
+  // Keep uDensity in sync if prop changes
+  useEffect(() => {
+    if (uniformsRef.current) {
+      uniformsRef.current.uDensity.value = density;
+    }
+  }, [density]);
 
   const currentShatter = useRef(0);
   const lastScrollY = useRef(typeof window !== 'undefined' ? window.scrollY : 0);
@@ -231,7 +244,9 @@ export function ParticleImage({ src, width = 4, height = 5, density = 500, scale
       if (rawT >= 1.0) {
         currentShatter.current = 0;
         isConverging.current = false;
-        shaderRef.current.uniforms.uConverge.value = 0;
+        // Do NOT reset uConverge to 0 here!
+        // 0 = scattered, 1.0 = fully converged.
+        // Resetting to 0 causes them to instantly revert to tiny scattered circles and react to mouse repel!
         if (wasShattered.current) {
           wasShattered.current = false;
           onSettledRef.current?.();
