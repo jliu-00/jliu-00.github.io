@@ -297,9 +297,9 @@ export function CareerTimeline() {
                   .sort((a, b) => (a.track === b.track ? 0 : a.track === "edu" ? -1 : 1))
                   .map((e) => (
                     <div key={e.id} className="flex flex-col items-center gap-0.5">
-                      <span className="flex items-center gap-2">
-                        <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: e.track === "edu" ? EDU : JOB }} />
-                        <span className="font-serif tracking-[-0.01em] text-balance" style={{ fontSize: 16, fontWeight: 400 }}>{e.title}</span>
+                      <span className="font-serif tracking-[-0.01em] text-balance text-foreground" style={{ fontSize: 16, fontWeight: 400 }}>
+                        <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full mr-2 align-middle" style={{ background: e.track === "edu" ? EDU : JOB, transform: 'translateY(-2px)' }} />
+                        {e.title}
                       </span>
                       <span className="font-mono uppercase tracking-[0.18em] text-muted-foreground" style={{ fontSize: 9 }}>{e.range}</span>
                       {e.role && (
