@@ -106,7 +106,7 @@ export function MagneticPin({ href, label, icon, tilt = 0, className = "", x: in
         aria-label={label}
         onMouseEnter={() => setActive(true)}
         onMouseLeave={() => setActive(false)}
-        drag={!isTouchDevice}
+        drag
         dragConstraints={{ top: 0, left: 0, right: 0, bottom: 0 }}
         dragElastic={0.6}
         dragTransition={{ bounceStiffness: 400, bounceDamping: 10 }}
