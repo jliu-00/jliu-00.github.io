@@ -354,7 +354,7 @@ export default function App() {
         <motion.div style={{ y: buttonsY }} className="absolute right-[25%] top-[74%] z-30 md:right-[28%] md:top-[78%]">
           <MagneticPin href="https://www.instagram.com/j.liu429/" label="Instagram" icon={<Instagram size={18} />} tilt={-5} />
         </motion.div>
-        <motion.div style={{ y: buttonsY }} className="absolute right-[10%] top-[88%] z-30 md:right-[10%] md:top-[84%]">
+        <motion.div style={{ y: buttonsY }} className="absolute right-[16%] top-[88%] z-30 md:right-[12%] md:top-[84%]">
           <MagneticPin href="https://xhslink.com/m/HRcSCfqVjo" label="RedNote" icon={<XiaohongshuIcon size={18} />} tilt={10} />
         </motion.div>
 
