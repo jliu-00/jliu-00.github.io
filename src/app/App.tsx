@@ -110,15 +110,23 @@ export default function App() {
     };
   }, []);
 
-  const [isMobile, setIsMobile] = useState(
-    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  const [deviceType, setDeviceType] = useState<'mobile' | 'tablet' | 'desktop'>(
+    typeof window !== 'undefined' 
+      ? (window.innerWidth < 768 ? 'mobile' : window.innerWidth < 1024 ? 'tablet' : 'desktop')
+      : 'desktop'
   );
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    const checkDevice = () => {
+      if (window.innerWidth < 768) setDeviceType('mobile');
+      else if (window.innerWidth < 1024) setDeviceType('tablet');
+      else setDeviceType('desktop');
+    };
+    checkDevice();
+    window.addEventListener('resize', checkDevice);
+    return () => window.removeEventListener('resize', checkDevice);
   }, []);
+
+  const cFactor = deviceType === 'mobile' ? 3 : deviceType === 'tablet' ? 5 : 7;
 
   const { scrollYProgress } = useScroll();
   const rawVelocity = useVelocity(scrollYProgress);
@@ -232,16 +240,16 @@ export default function App() {
               
               {/* Overlay Particle Image for interaction - expanded bounds to let particles fly! */}
               <div 
-                className={`absolute inset-[-50%] md:inset-[-300%] z-0 transition-opacity duration-300 ease-in-out pointer-events-none ${isBaseShattering ? 'opacity-100' : 'opacity-0'}`}
+                className={`absolute inset-[-100%] md:inset-[-200%] lg:inset-[-300%] z-0 transition-opacity duration-300 ease-in-out pointer-events-none ${isBaseShattering ? 'opacity-100' : 'opacity-0'}`}
               >
-                <Canvas frameloop={isCanvasVisible ? "always" : "never"} style={{ pointerEvents: 'none' }} dpr={isMobile ? 1 : [1, 1.5]} camera={{ position: [0, 0, 35], fov: 50 }} gl={{ powerPreference: "high-performance", antialias: false }}>
+                <Canvas frameloop={isCanvasVisible ? "always" : "never"} style={{ pointerEvents: 'none' }} dpr={deviceType === 'desktop' ? [1, 1.5] : 1} camera={{ position: [0, 0, 35], fov: 50 }} gl={{ powerPreference: "high-performance", antialias: false }}>
                   <Suspense fallback={null}>
                     <ParticleImage 
                       src={HERO_IMG}
                       width={4.2}
                       height={5.6}
-                      scale={isMobile ? 2.914 : 0.833}
-                      density={isMobile ? 70 : 100}
+                      scale={5.821 / cFactor}
+                      density={deviceType === 'mobile' ? 70 : 100}
                       onSettled={handleParticleSettled}
                     />
                   </Suspense>
@@ -269,16 +277,16 @@ export default function App() {
                 className={`absolute inset-0 h-full w-full object-cover rounded-[2rem] transition-opacity duration-300 ease-in-out ${isOverlayShattering ? 'opacity-0' : 'opacity-100'}`}
               />
               <div 
-                className={`absolute inset-[-50%] md:inset-[-300%] z-0 transition-opacity duration-300 ease-in-out pointer-events-none ${isOverlayShattering ? 'opacity-100' : 'opacity-0'}`}
+                className={`absolute inset-[-100%] md:inset-[-200%] lg:inset-[-300%] z-0 transition-opacity duration-300 ease-in-out pointer-events-none ${isOverlayShattering ? 'opacity-100' : 'opacity-0'}`}
               >
-                <Canvas frameloop={isCanvasVisible ? "always" : "never"} style={{ pointerEvents: 'none' }} dpr={isMobile ? 1 : [1, 1.5]} camera={{ position: [0, 0, 35], fov: 50 }} gl={{ powerPreference: "high-performance", antialias: false }}>
+                <Canvas frameloop={isCanvasVisible ? "always" : "never"} style={{ pointerEvents: 'none' }} dpr={deviceType === 'desktop' ? [1, 1.5] : 1} camera={{ position: [0, 0, 35], fov: 50 }} gl={{ powerPreference: "high-performance", antialias: false }}>
                   <Suspense fallback={null}>
                     <ParticleImage 
                       src="/IG.jpg"
                       width={5.6}
                       height={4.2}
-                      scale={isMobile ? 3.886 : 1.11}
-                      density={isMobile ? 70 : 100}
+                      scale={7.761 / cFactor}
+                      density={deviceType === 'mobile' ? 70 : 100}
                       onSettled={handleParticleSettled}
                     />
                   </Suspense>

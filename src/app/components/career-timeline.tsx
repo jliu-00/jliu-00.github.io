@@ -278,12 +278,16 @@ export function CareerTimeline() {
 
         {/* read-out — stable centered block in normal flow, never edge-squeezed.
             Reserves its own height so it can't collide with the footer. */}
-        <div className={`pointer-events-none relative mt-9 flex items-start justify-center transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] md:min-h-[180px] ${active ? "min-h-[180px]" : "min-h-[30px]"}`}>
+        <motion.div 
+          layout 
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="pointer-events-none relative mt-9 grid justify-items-center items-start md:min-h-[180px]"
+        >
           <AnimatePresence>
             {active && liveEntries.length > 0 ? (
               <motion.div
                 key={liveEntries.map((e) => e.id).join("-")}
-                className="absolute left-1/2 flex w-full max-w-[640px] -translate-x-1/2 flex-col items-center gap-3 text-center"
+                className="col-start-1 row-start-1 flex w-full max-w-[640px] flex-col items-center gap-3 text-center"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
@@ -318,7 +322,7 @@ export function CareerTimeline() {
             ) : active ? (
               <motion.span
                 key="gap"
-                className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap font-mono uppercase tracking-[0.3em] text-muted-foreground"
+                className="col-start-1 row-start-1 whitespace-nowrap font-mono uppercase tracking-[0.3em] text-muted-foreground"
                 style={{ fontSize: 9 }}
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 0.6, y: 0 }} exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
@@ -328,7 +332,7 @@ export function CareerTimeline() {
             ) : (
               <motion.span
                 key="hint"
-                className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap font-mono uppercase tracking-[0.3em] text-muted-foreground"
+                className="col-start-1 row-start-1 whitespace-nowrap font-mono uppercase tracking-[0.3em] text-muted-foreground"
                 style={{ fontSize: 9 }}
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 0.6, y: 0 }} exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
@@ -337,7 +341,7 @@ export function CareerTimeline() {
               </motion.span>
             )}
           </AnimatePresence>
-        </div>
+        </motion.div>
       </div>
     </section>
   );
