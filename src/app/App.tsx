@@ -330,10 +330,10 @@ export default function App() {
         <motion.div style={{ y: buttonsY }} className="absolute left-[28%] top-[82%] z-30 md:left-[30%] md:top-[74%]">
           <MagneticPin href="https://www.linkedin.com/in/jiahong-liu-27a456174/" label="LinkedIn" icon={<Linkedin size={18} />} tilt={6} />
         </motion.div>
-        <motion.div style={{ y: buttonsY }} className="absolute right-[32%] top-[78%] z-30 md:right-[25%] md:top-[64%]">
+        <motion.div style={{ y: buttonsY }} className="absolute right-[25%] top-[74%] z-30 md:right-[28%] md:top-[78%]">
           <MagneticPin href="https://www.instagram.com/j.liu429/" label="Instagram" icon={<Instagram size={18} />} tilt={-5} />
         </motion.div>
-        <motion.div style={{ y: buttonsY }} className="absolute right-[15%] top-[86%] z-30 md:right-[12%] md:top-[80%]">
+        <motion.div style={{ y: buttonsY }} className="absolute right-[10%] top-[88%] z-30 md:right-[10%] md:top-[84%]">
           <MagneticPin href="https://xhslink.com/m/HRcSCfqVjo" label="RedNote" icon={<XiaohongshuIcon size={18} />} tilt={10} />
         </motion.div>
 
