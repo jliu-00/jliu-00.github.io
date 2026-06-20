@@ -61,11 +61,22 @@ export function MagneticPin({ href, label, icon, tilt = 0, className = "", x: in
     // We only update rect when images load or font loads to be safe
     document.fonts.ready.then(updateRect);
 
-    const handleMove = (e: MouseEvent) => {
-      // Use pageX/pageY instead of clientX to avoid layout thrashing
-      // and entirely bypass getBoundingClientRect
-      const dx = centerXPage - e.pageX;
-      const dy = centerYPage - e.pageY;
+    const handleMove = (e: MouseEvent | TouchEvent) => {
+      let pageX, pageY;
+      if ('touches' in e) {
+        if (e.touches.length > 0) {
+          pageX = e.touches[0].pageX;
+          pageY = e.touches[0].pageY;
+        } else {
+          return;
+        }
+      } else {
+        pageX = (e as MouseEvent).pageX;
+        pageY = (e as MouseEvent).pageY;
+      }
+
+      const dx = centerXPage - pageX;
+      const dy = centerYPage - pageY;
       const dist = Math.sqrt(dx * dx + dy * dy);
       
       const maxLightDist = 800; 
@@ -78,8 +89,13 @@ export function MagneticPin({ href, label, icon, tilt = 0, className = "", x: in
     };
     
     window.addEventListener("mousemove", handleMove, { passive: true });
+    window.addEventListener("touchmove", handleMove, { passive: true });
+    window.addEventListener("touchstart", handleMove, { passive: true });
+    
     return () => {
       window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("touchmove", handleMove);
+      window.removeEventListener("touchstart", handleMove);
       window.removeEventListener("resize", updateRect);
     };
   }, []);
@@ -107,10 +123,18 @@ export function MagneticPin({ href, label, icon, tilt = 0, className = "", x: in
         onMouseEnter={() => setActive(true)}
         onMouseLeave={() => setActive(false)}
         drag
+        draggable={false}
         dragConstraints={{ top: 0, left: 0, right: 0, bottom: 0 }}
         dragElastic={0.6}
         dragTransition={{ bounceStiffness: 400, bounceDamping: 10 }}
-        style={{ x, y }} // Used for drag physics only
+        style={{ 
+          x, 
+          y, 
+          WebkitTouchCallout: "none", 
+          WebkitUserSelect: "none", 
+          userSelect: "none",
+          touchAction: "none"
+        }} // Used for drag physics only
         className={`group relative inline-flex h-[58px] w-[58px] items-center justify-center rounded-full ${className}`}
       >
         <motion.div style={{ x: gyroX, y: gyroY }} className="absolute inset-0 pointer-events-none">

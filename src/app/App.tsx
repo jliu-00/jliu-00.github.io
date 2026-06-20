@@ -81,9 +81,11 @@ export default function App() {
     
     window.addEventListener("mousemove", handleMove, { passive: true });
     window.addEventListener("touchmove", handleMove, { passive: true });
+    window.addEventListener("touchstart", handleMove, { passive: true });
     return () => {
       window.removeEventListener("mousemove", handleMove);
       window.removeEventListener("touchmove", handleMove);
+      window.removeEventListener("touchstart", handleMove);
     };
   }, []);
 
@@ -359,6 +361,7 @@ export default function App() {
             target="_blank"
             rel="noopener noreferrer"
             data-cursor="Connect"
+            onTouchStart={() => {}}
             className="font-serif tracking-[-0.02em] transition-colors hover:text-accent active:text-accent active:scale-95 origin-left inline-block"
             style={{ fontSize: "clamp(2rem, 6vw, 4.5rem)", fontWeight: 300 }}
           >
