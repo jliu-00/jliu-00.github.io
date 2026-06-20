@@ -8,6 +8,7 @@ import { ParticleImage } from "./components/particle-image";
 import { ScrambledText } from "./components/scrambled-text";
 import { XiaohongshuIcon } from "./components/icons";
 import { TintWordCTA } from "./components/tintword-cta";
+import { CareerTimeline } from "./components/career-timeline";
 import { ImageWithFallback } from "./components/figma/ImageWithFallback";
 
 const HERO_IMG = "/Profie.jpg";
@@ -209,14 +210,14 @@ export default function App() {
                       src={HERO_IMG} 
                       width={4.2}
                       height={5.6}
-                      scale={1/3}
+                      scale={0.833}
                       onSettled={handleParticleSettled}
                     />
                   </Suspense>
                 </Canvas>
               </div>
               {/* Dark mode intelligent dimmer */}
-              <div className={`pointer-events-none absolute inset-0 z-10 bg-black/0 transition-all duration-[1500ms] dark:group-hover:bg-black/0 ${isBaseShattering ? 'opacity-0' : 'dark:bg-black/30 opacity-100'}`} />
+              <div className={`pointer-events-none absolute inset-0 z-10 rounded-[2rem] bg-black/0 transition-all duration-[1500ms] dark:group-hover:bg-black/0 ${isBaseShattering ? 'opacity-0' : 'dark:bg-black/30 opacity-100'}`} />
             </div>
           </motion.div>
 
@@ -245,14 +246,14 @@ export default function App() {
                       src="/IG.jpg" 
                       width={5.6}
                       height={4.2}
-                      scale={1/3}
+                      scale={1.11}
                       onSettled={handleParticleSettled}
                     />
                   </Suspense>
                 </Canvas>
               </div>
               {/* Dark mode intelligent dimmer */}
-              <div className={`pointer-events-none absolute inset-0 z-10 bg-black/0 transition-all duration-[1500ms] dark:group-hover:bg-black/0 ${isOverlayShattering ? 'opacity-0' : 'dark:bg-black/30 opacity-100'}`} />
+              <div className={`pointer-events-none absolute inset-0 z-10 rounded-[2rem] bg-black/0 transition-all duration-[1500ms] dark:group-hover:bg-black/0 ${isOverlayShattering ? 'opacity-0' : 'dark:bg-black/30 opacity-100'}`} />
             </div>
           </motion.div>
 
@@ -349,6 +350,11 @@ export default function App() {
           <ArrowDown size={16} className="text-muted-foreground" />
         </motion.div>
       </section>
+
+      {/* ================= TIMELINE ================= */}
+      <div className="pt-[15vh]">
+        <CareerTimeline />
+      </div>
 
       {/* ================= TINTWORD CTA ================= */}
       <TintWordCTA />
