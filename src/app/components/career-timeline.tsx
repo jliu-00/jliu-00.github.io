@@ -115,10 +115,27 @@ export function CareerTimeline() {
       : [];
   const liveIds = new Set(liveEntries.map((e) => e.id));
 
+  const SNAP_YEARS = 0.25; // 3 months magnetic radius
   const readFrac = (clientX: number) => {
     const r = railRef.current?.getBoundingClientRect();
     if (!r) return 0;
-    return Math.min(1, Math.max(0, (clientX - r.left) / r.width));
+    const rawFrac = Math.min(1, Math.max(0, (clientX - r.left) / r.width));
+    const rawYear = unscale(rawFrac * 100);
+    
+    let closestStart = rawYear;
+    let minDiff = Infinity;
+    for (const e of ENTRIES) {
+      const diff = Math.abs(e.start - rawYear);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestStart = e.start;
+      }
+    }
+
+    if (minDiff < SNAP_YEARS) {
+      return scale(closestStart) / 100;
+    }
+    return rawFrac;
   };
 
   // Desktop: drive the playhead from a window mouse listener with an explicit
@@ -133,7 +150,7 @@ export function CareerTimeline() {
       const inX = e.clientX >= r.left && e.clientX <= r.right;
       const inY = e.clientY >= r.top && e.clientY <= r.top + bandHeight;
       if (inX && inY) {
-        setCx(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)));
+        setCx(readFrac(e.clientX));
       } else {
         setCx((c) => (c === null ? c : null));
       }
@@ -265,12 +282,12 @@ export function CareerTimeline() {
           <AnimatePresence>
             {active && liveEntries.length > 0 ? (
               <motion.div
-                key="readout"
-                className="flex w-full max-w-[640px] flex-col items-center gap-3 text-center"
-                initial={{ opacity: 0, y: 6 }}
+                key={liveEntries.map((e) => e.id).join("-")}
+                className="absolute left-1/2 flex w-full max-w-[640px] -translate-x-1/2 flex-col items-center gap-3 text-center"
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.2 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               >
                 {[...liveEntries]
                   .sort((a, b) => (a.track === b.track ? 0 : a.track === "edu" ? -1 : 1))
@@ -301,18 +318,20 @@ export function CareerTimeline() {
             ) : active ? (
               <motion.span
                 key="gap"
-                className="font-mono uppercase tracking-[0.3em] text-muted-foreground"
+                className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap font-mono uppercase tracking-[0.3em] text-muted-foreground"
                 style={{ fontSize: 9 }}
-                initial={{ opacity: 0 }} animate={{ opacity: 0.6 }} exit={{ opacity: 0 }}
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 0.6, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               >
-                {cursorYear !== null && cursorYear < 2012.67 ? "Just a child" : "· between roles ·"}
+                {cursorYear !== null && cursorYear < 2012.67 ? "Just a child" : ""}
               </motion.span>
             ) : (
               <motion.span
                 key="hint"
-                className="font-mono uppercase tracking-[0.3em] text-muted-foreground"
+                className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap font-mono uppercase tracking-[0.3em] text-muted-foreground"
                 style={{ fontSize: 9 }}
-                initial={{ opacity: 0 }} animate={{ opacity: 0.6 }} exit={{ opacity: 0 }}
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 0.6, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               >
                 drag across — a life in time
               </motion.span>
