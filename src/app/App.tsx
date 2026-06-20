@@ -242,7 +242,7 @@ export default function App() {
               <div 
                 className={`absolute inset-[-100%] md:inset-[-200%] lg:inset-[-300%] z-0 transition-opacity duration-300 ease-in-out pointer-events-none ${isBaseShattering ? 'opacity-100' : 'opacity-0'}`}
               >
-                <Canvas frameloop={isCanvasVisible ? "always" : "never"} style={{ pointerEvents: 'none' }} dpr={deviceType === 'desktop' ? [1, 1.5] : 1} camera={{ position: [0, 0, 35], fov: 50 }} gl={{ powerPreference: "high-performance", antialias: false }}>
+                <Canvas frameloop={isCanvasVisible ? "always" : "demand"} style={{ pointerEvents: 'none' }} dpr={deviceType === 'desktop' ? [1, 1.5] : 1} camera={{ position: [0, 0, 35], fov: 50 }} gl={{ powerPreference: "high-performance", antialias: false }}>
                   <Suspense fallback={null}>
                     <ParticleImage 
                       src={HERO_IMG}
@@ -279,7 +279,7 @@ export default function App() {
               <div 
                 className={`absolute inset-[-100%] md:inset-[-200%] lg:inset-[-300%] z-0 transition-opacity duration-300 ease-in-out pointer-events-none ${isOverlayShattering ? 'opacity-100' : 'opacity-0'}`}
               >
-                <Canvas frameloop={isCanvasVisible ? "always" : "never"} style={{ pointerEvents: 'none' }} dpr={deviceType === 'desktop' ? [1, 1.5] : 1} camera={{ position: [0, 0, 35], fov: 50 }} gl={{ powerPreference: "high-performance", antialias: false }}>
+                <Canvas frameloop={isCanvasVisible ? "always" : "demand"} style={{ pointerEvents: 'none' }} dpr={deviceType === 'desktop' ? [1, 1.5] : 1} camera={{ position: [0, 0, 35], fov: 50 }} gl={{ powerPreference: "high-performance", antialias: false }}>
                   <Suspense fallback={null}>
                     <ParticleImage 
                       src="/IG.jpg"
