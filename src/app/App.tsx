@@ -239,7 +239,7 @@ export default function App() {
                       width={4.2}
                       height={5.6}
                       scale={isMobile ? 1.457 : 0.833}
-                      density={isMobile ? 150 : 250}
+                      density={100}
                       onSettled={handleParticleSettled}
                     />
                   </Suspense>
@@ -276,7 +276,7 @@ export default function App() {
                       width={5.6}
                       height={4.2}
                       scale={isMobile ? 1.943 : 1.11}
-                      density={isMobile ? 150 : 250}
+                      density={100}
                       onSettled={handleParticleSettled}
                     />
                   </Suspense>
