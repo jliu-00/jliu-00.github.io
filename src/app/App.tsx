@@ -232,15 +232,15 @@ export default function App() {
               
               {/* Overlay Particle Image for interaction - expanded bounds to let particles fly! */}
               <div 
-                className={`absolute inset-[-150%] md:inset-[-300%] z-0 transition-opacity duration-300 ease-in-out pointer-events-none ${isBaseShattering ? 'opacity-100' : 'opacity-0'}`}
+                className={`absolute inset-[-50%] md:inset-[-300%] z-0 transition-opacity duration-300 ease-in-out pointer-events-none ${isBaseShattering ? 'opacity-100' : 'opacity-0'}`}
               >
-                <Canvas style={{ pointerEvents: 'none' }} dpr={[1, 1.5]} camera={{ position: [0, 0, 35], fov: 50 }} gl={{ powerPreference: "high-performance", antialias: false }}>
+                <Canvas frameloop={isCanvasVisible ? "always" : "never"} style={{ pointerEvents: 'none' }} dpr={isMobile ? 1 : [1, 1.5]} camera={{ position: [0, 0, 35], fov: 50 }} gl={{ powerPreference: "high-performance", antialias: false }}>
                   <Suspense fallback={null}>
                     <ParticleImage 
-                      src={HERO_IMG} 
+                      src={HERO_IMG}
                       width={4.2}
                       height={5.6}
-                      scale={isMobile ? 1.457 : 0.833}
+                      scale={isMobile ? 2.914 : 0.833}
                       density={isMobile ? 70 : 100}
                       onSettled={handleParticleSettled}
                     />
@@ -269,15 +269,15 @@ export default function App() {
                 className={`absolute inset-0 h-full w-full object-cover rounded-[2rem] transition-opacity duration-300 ease-in-out ${isOverlayShattering ? 'opacity-0' : 'opacity-100'}`}
               />
               <div 
-                className={`absolute inset-[-150%] md:inset-[-300%] z-0 transition-opacity duration-300 ease-in-out pointer-events-none ${isOverlayShattering ? 'opacity-100' : 'opacity-0'}`}
+                className={`absolute inset-[-50%] md:inset-[-300%] z-0 transition-opacity duration-300 ease-in-out pointer-events-none ${isOverlayShattering ? 'opacity-100' : 'opacity-0'}`}
               >
-                <Canvas style={{ pointerEvents: 'none' }} dpr={[1, 1.5]} camera={{ position: [0, 0, 35], fov: 50 }} gl={{ powerPreference: "high-performance", antialias: false }}>
+                <Canvas frameloop={isCanvasVisible ? "always" : "never"} style={{ pointerEvents: 'none' }} dpr={isMobile ? 1 : [1, 1.5]} camera={{ position: [0, 0, 35], fov: 50 }} gl={{ powerPreference: "high-performance", antialias: false }}>
                   <Suspense fallback={null}>
                     <ParticleImage 
-                      src="/IG.jpg" 
+                      src="/IG.jpg"
                       width={5.6}
                       height={4.2}
-                      scale={isMobile ? 1.943 : 1.11}
+                      scale={isMobile ? 3.886 : 1.11}
                       density={isMobile ? 70 : 100}
                       onSettled={handleParticleSettled}
                     />
