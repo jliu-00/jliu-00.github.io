@@ -1,14 +1,16 @@
-import { useEffect, useRef, useState } from "react";
-import { motion, useScroll, useTransform } from "motion/react";
+import { useEffect, useRef, useState, useCallback, Suspense } from "react";
+import { motion, useScroll, useTransform, useVelocity, useSpring, useMotionValueEvent } from "motion/react";
+import { Canvas } from "@react-three/fiber";
 import { Github, Linkedin, Instagram, Moon, Sun, ArrowDown } from "lucide-react";
 import { CustomCursor } from "./components/custom-cursor";
 import { MagneticPin } from "./components/magnetic-pin";
+import { ParticleImage } from "./components/particle-image";
+import { ScrambledText } from "./components/scrambled-text";
 import { XiaohongshuIcon } from "./components/icons";
 import { TintWordCTA } from "./components/tintword-cta";
 import { ImageWithFallback } from "./components/figma/ImageWithFallback";
 
-const HERO_IMG = "/IG.jpg";
-
+const HERO_IMG = "/Profie.jpg";
 export default function App() {
   const [dark, setDark] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -16,6 +18,47 @@ export default function App() {
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
   }, [dark]);
+
+  const toggleDark = (e: React.MouseEvent) => {
+    const isDark = !dark;
+    
+    if (!document.startViewTransition) {
+      setDark(isDark);
+      return;
+    }
+
+    // Eclipse (to dark) starts at the icon. Sunrise (to light) starts at bottom center.
+    const originX = isDark ? e.clientX : window.innerWidth / 2;
+    const originY = isDark ? e.clientY : window.innerHeight;
+    const endRadius = Math.hypot(
+      Math.max(originX, innerWidth - originX),
+      Math.max(originY, innerHeight - originY)
+    );
+
+    const transition = document.startViewTransition(() => {
+      setDark(isDark);
+      // documentElement class is updated in useEffect, but doing it here guarantees it is within the snapshot
+      document.documentElement.classList.toggle("dark", isDark);
+    });
+
+    transition.ready.then(() => {
+      const clipPath = [
+        `circle(0px at ${originX}px ${originY}px)`,
+        `circle(${endRadius}px at ${originX}px ${originY}px)`
+      ];
+      
+      document.documentElement.animate(
+        {
+          clipPath: clipPath,
+        },
+        {
+          duration: 1000,
+          easing: isDark ? "ease-in" : "ease-out",
+          pseudoElement: "::view-transition-new(root)",
+        }
+      );
+    });
+  };
 
   // Global Spotlight Tracker
   useEffect(() => {
@@ -45,16 +88,56 @@ export default function App() {
   }, []);
 
   const { scrollYProgress } = useScroll();
+  const rawVelocity = useVelocity(scrollYProgress);
+  const smoothVelocity = useSpring(rawVelocity, {
+    damping: 50,
+    stiffness: 400
+  });
+
+  const [scrollSpeed, setScrollSpeed] = useState(0);
+  useMotionValueEvent(smoothVelocity, "change", (latest) => {
+    setScrollSpeed(Math.abs(latest));
+  });
+
+
+
+  const [isCanvasVisible, setIsCanvasVisible] = useState(false);
+  const settledCount = useRef(0);
+  const totalParticleImages = 2; // Portrait + Landscape
+  
+  const handleParticleSettled = useCallback(() => {
+    settledCount.current += 1;
+    if (settledCount.current >= totalParticleImages) {
+      setIsCanvasVisible(false);
+      settledCount.current = 0;
+    }
+  }, []);
+  
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsCanvasVisible(true);
+      settledCount.current = 0;
+    };
+    
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Use isCanvasVisible to control the crossfade between the solid <img> and the <Canvas>
+  const isBaseShattering = isCanvasVisible;
+  const isOverlayShattering = isCanvasVisible;
+  
   // parallax depths for the floating layers
   const baseImgY = useTransform(scrollYProgress, [0, 1], [0, -180]);
   const overlayImgY = useTransform(scrollYProgress, [0, 1], [0, -380]);
   const titleY = useTransform(scrollYProgress, [0, 1], [0, 180]);
   const accentY = useTransform(scrollYProgress, [0, 0.6], [0, -160]);
+  const buttonsY = useTransform(scrollYProgress, [0, 1], [0, 300]);
 
   return (
     <div
       ref={ref}
-      className="relative min-h-screen w-full overflow-x-hidden bg-background text-foreground"
+      className="relative flex min-h-screen w-full flex-col overflow-hidden bg-background text-foreground transition-colors duration-1000 ease-in-out"
       style={{ cursor: "none" }}
     >
       <CustomCursor />
@@ -66,7 +149,7 @@ export default function App() {
         </span>
         <button
           data-cursor={dark ? "Light" : "Dark"}
-          onClick={() => setDark((d) => !d)}
+          onClick={toggleDark}
           aria-label="Toggle theme"
           className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full border border-foreground/25 transition-colors hover:bg-foreground hover:text-background active:scale-90"
         >
@@ -100,19 +183,38 @@ export default function App() {
           {/* Base Layer: Portrait Photo (Profie.jpg) */}
           <motion.div
             style={{ y: baseImgY, zIndex: 1 }}
-            whileHover={{ scale: 1.03, rotate: 3 }}
-            whileTap={{ scale: 0.95, rotate: 0 }}
+            whileHover={{ scale: 1.05, rotate: 2, zIndex: 20 }}
+            whileTap={{ scale: 0.95, rotate: 0, zIndex: 20 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
             className="absolute right-[5%] top-0 w-[65%] md:right-0 md:w-[50%] pointer-events-auto cursor-pointer origin-bottom-right"
           >
-            <div className="group relative aspect-[3/4] overflow-hidden rounded-[2rem] bg-muted shadow-2xl shadow-black/10 transition-shadow duration-500 hover:shadow-[0_30px_60px_rgba(0,0,0,0.2)]">
+            <div 
+              className={`group relative aspect-[3/4] overflow-visible rounded-[2rem] transition-all duration-500 ${isBaseShattering ? 'bg-transparent shadow-none' : 'bg-muted shadow-2xl shadow-black/10 hover:shadow-[0_30px_60px_rgba(0,0,0,0.2)]'}`}
+            >
               <ImageWithFallback
-                src="/Profie.jpg"
-                alt="Skyward Bound"
-                className="h-full w-full object-cover grayscale-[0.15] contrast-[1.05] transition-transform duration-700 group-hover:scale-110"
+                src={HERO_IMG}
+                alt="Jiahong Liu"
+                className={`absolute inset-0 h-full w-full object-cover rounded-[2rem] transition-opacity duration-300 ease-in-out ${isBaseShattering ? 'opacity-0' : 'opacity-100'}`}
               />
+              
+              {/* Overlay Particle Image for interaction - expanded bounds to let particles fly! */}
+              <div 
+                className={`absolute inset-[-300%] z-0 transition-opacity duration-300 ease-in-out pointer-events-none ${isBaseShattering ? 'opacity-100' : 'opacity-0'}`}
+              >
+                <Canvas dpr={[1, 1.5]} camera={{ position: [0, 0, 35], fov: 50 }} gl={{ powerPreference: "high-performance", antialias: false }}>
+                  <Suspense fallback={null}>
+                    <ParticleImage 
+                      src={HERO_IMG} 
+                      width={4.2}
+                      height={5.6}
+                      scale={1/3}
+                      onSettled={handleParticleSettled}
+                    />
+                  </Suspense>
+                </Canvas>
+              </div>
               {/* Dark mode intelligent dimmer */}
-              <div className="pointer-events-none absolute inset-0 z-10 bg-black/0 transition-colors duration-700 dark:bg-black/30 dark:group-hover:bg-black/0" />
+              <div className={`pointer-events-none absolute inset-0 z-10 bg-black/0 transition-all duration-[1500ms] dark:group-hover:bg-black/0 ${isBaseShattering ? 'opacity-0' : 'dark:bg-black/30 opacity-100'}`} />
             </div>
           </motion.div>
 
@@ -124,14 +226,31 @@ export default function App() {
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
             className="absolute bottom-[5%] left-[5%] w-[85%] md:bottom-[15%] md:left-[-30%] md:w-[85%] pointer-events-auto cursor-pointer origin-bottom-left"
           >
-            <div className="group relative aspect-[4/3] overflow-hidden rounded-2xl border-[6px] border-background bg-muted shadow-[0_20px_40px_rgba(0,0,0,0.2)] transition-shadow duration-500 hover:shadow-[0_30px_60px_rgba(0,0,0,0.3)]">
-              <ImageWithFallback
+            <div 
+              className={`group relative aspect-[4/3] overflow-visible rounded-[2rem] transition-all duration-500 ${isOverlayShattering ? 'bg-transparent shadow-none' : 'bg-muted shadow-2xl shadow-black/10 hover:shadow-[0_30px_60px_rgba(0,0,0,0.2)]'}`}
+            >
+              <ImageWithFallback 
                 src="/IG.jpg"
-                alt="Editorial Portrait"
-                className="h-full w-full object-cover grayscale-[0.05] contrast-[1.1] transition-transform duration-700 group-hover:scale-110"
+                alt="Static Port"
+                className={`absolute inset-0 h-full w-full object-cover rounded-[2rem] transition-opacity duration-300 ease-in-out ${isOverlayShattering ? 'opacity-0' : 'opacity-100'}`}
               />
+              <div 
+                className={`absolute inset-[-300%] z-0 transition-opacity duration-300 ease-in-out pointer-events-none ${isOverlayShattering ? 'opacity-100' : 'opacity-0'}`}
+              >
+                <Canvas dpr={[1, 1.5]} camera={{ position: [0, 0, 35], fov: 50 }} gl={{ powerPreference: "high-performance", antialias: false }}>
+                  <Suspense fallback={null}>
+                    <ParticleImage 
+                      src="/IG.jpg" 
+                      width={5.6}
+                      height={4.2}
+                      scale={1/3}
+                      onSettled={handleParticleSettled}
+                    />
+                  </Suspense>
+                </Canvas>
+              </div>
               {/* Dark mode intelligent dimmer */}
-              <div className="pointer-events-none absolute inset-0 z-10 bg-black/0 transition-colors duration-700 dark:bg-black/30 dark:group-hover:bg-black/0" />
+              <div className={`pointer-events-none absolute inset-0 z-10 bg-black/0 transition-all duration-[1500ms] dark:group-hover:bg-black/0 ${isOverlayShattering ? 'opacity-0' : 'dark:bg-black/30 opacity-100'}`} />
             </div>
           </motion.div>
 
@@ -197,24 +316,24 @@ export default function App() {
             className="font-serif leading-[0.84] tracking-[-0.03em]"
             style={{ fontSize: "clamp(3.4rem, 13vw, 12rem)", fontWeight: 300 }}
           >
-            <span className="block">Jiahong</span>
-            <span className="block italic md:ml-[14%]">Liu</span>
+            <ScrambledText text="Jiahong" className="block" delayMs={100} durationMs={1000} />
+            <ScrambledText text="Liu" className="block italic md:ml-[14%]" delayMs={400} durationMs={1000} />
           </h1>
         </motion.div>
 
-        {/* scattered social pins (not boxed) */}
-        <div className="absolute left-[5%] top-[68%] z-30 md:left-[8%] md:top-[58%]">
+        {/* scattered social pins (not boxed) - moving slower than background to stay on screen longer */}
+        <motion.div style={{ y: buttonsY }} className="absolute left-[5%] top-[68%] z-30 md:left-[8%] md:top-[58%]">
           <MagneticPin href="https://github.com/jliu-00" label="GitHub" icon={<Github size={18} />} tilt={-8} />
-        </div>
-        <div className="absolute left-[20%] top-[82%] z-30 md:left-[24%] md:top-[74%]">
+        </motion.div>
+        <motion.div style={{ y: buttonsY }} className="absolute left-[20%] top-[82%] z-30 md:left-[24%] md:top-[74%]">
           <MagneticPin href="https://www.linkedin.com/in/jiahong-liu-27a456174/" label="LinkedIn" icon={<Linkedin size={18} />} tilt={6} />
-        </div>
-        <div className="absolute right-[25%] top-[78%] z-30 md:right-[18%] md:top-[64%]">
+        </motion.div>
+        <motion.div style={{ y: buttonsY }} className="absolute right-[25%] top-[78%] z-30 md:right-[18%] md:top-[64%]">
           <MagneticPin href="https://www.instagram.com/j.liu429/" label="Instagram" icon={<Instagram size={18} />} tilt={-5} />
-        </div>
-        <div className="absolute right-[5%] top-[86%] z-30 md:right-[5%] md:top-[80%]">
+        </motion.div>
+        <motion.div style={{ y: buttonsY }} className="absolute right-[5%] top-[86%] z-30 md:right-[5%] md:top-[80%]">
           <MagneticPin href="https://xhslink.com/m/HRcSCfqVjo" label="小红书" icon={<XiaohongshuIcon size={18} />} tilt={10} />
-        </div>
+        </motion.div>
 
         {/* scroll indicator */}
         <motion.div

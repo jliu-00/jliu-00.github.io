@@ -184,3 +184,11 @@
     line-height: 1.5;
   }
 }
+
+/* View Transitions for Dark Mode Eclipse Effect */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+/* We apply the animation dynamically via JS, so we just need to disable the default crossfade above */
