@@ -341,9 +341,15 @@ export function ParticleImage({ src, width = 4, height = 5, density = 500, scale
       groupRef.current.position.x = (nx - 0.5) * vW;
       groupRef.current.position.y = -(compensatedNy - 0.5) * vH;
 
-      // Scale so the plane matches the container's visual size
+      // Compensate for point size bleed. gl_PointSize is in physical pixels.
+      const glPointSize = 75.0 * (500.0 / density) * (1.0 / dist);
+      const dpr = state.viewport.dpr || 1;
+      const particleWorldSize = ((glPointSize / dpr) / cr.height) * vH;
+
+      // Scale so the plane's VISUAL size (including particle bleed) perfectly matches the DOM container
       const containerWorldH = (tr.height / cr.height) * vH;
-      groupRef.current.scale.setScalar(containerWorldH / height);
+      const visualHeight = height + particleWorldSize;
+      groupRef.current.scale.setScalar(containerWorldH / visualHeight);
     }
   });
 
