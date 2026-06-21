@@ -1,16 +1,15 @@
 import { useEffect, useRef, useState, useCallback, Suspense, lazy } from "react";
-import { motion, useScroll, useTransform, useVelocity, useSpring, useMotionValueEvent } from "motion/react";
-import { Canvas } from "@react-three/fiber";
-import { Github, Linkedin, Instagram, Moon, Sun, ArrowDown } from "lucide-react";
+import { motion, useScroll, useTransform } from "motion/react";
 import { CustomCursor } from "./components/custom-cursor";
+import { Github, Linkedin, Instagram, Moon, Sun, ArrowDown } from "lucide-react";
 import { MagneticPin } from "./components/magnetic-pin";
-import { ParticleImage } from "./components/particle-image";
 import { ScrambledText } from "./components/scrambled-text";
 import { XiaohongshuIcon } from "./components/icons";
 import { ImageWithFallback } from "./components/figma/ImageWithFallback";
 
 const CareerTimeline = lazy(() => import("./components/career-timeline").then(m => ({ default: m.CareerTimeline })));
 const TintWordCTA = lazy(() => import("./components/tintword-cta").then(m => ({ default: m.TintWordCTA })));
+const ParticleScene = lazy(() => import("./components/particle-scene").then(m => ({ default: m.ParticleScene })));
 
 const HERO_IMG = "/airplane.webp";
 export default function App() {
@@ -131,11 +130,6 @@ export default function App() {
   const overlayContainerRef = useRef<HTMLDivElement>(null);
 
   const { scrollYProgress } = useScroll();
-  const rawVelocity = useVelocity(scrollYProgress);
-  const smoothVelocity = useSpring(rawVelocity, {
-    damping: 50,
-    stiffness: 400
-  });
 
   const [isCanvasVisible, setIsCanvasVisible] = useState(true);
   const settledCount = useRef(0);
@@ -216,36 +210,16 @@ export default function App() {
 
         {/* Single hero-level canvas for all particle effects */}
         <div className={`fixed inset-0 z-[3] pointer-events-none transition-opacity duration-300 ease-in-out ${isCanvasVisible ? 'opacity-100' : 'opacity-0'}`}>
-          <Canvas frameloop={isCanvasVisible ? "always" : "demand"} style={{ pointerEvents: 'none' }} dpr={deviceType === 'desktop' ? [1, 1.5] : 1} camera={{ position: [0, 0, 35], fov: 50 }} gl={{ powerPreference: "high-performance", antialias: false }}>
-            <Suspense fallback={null}>
-              <ParticleImage
-                src={HERO_IMG}
-                width={4.2}
-                height={5.6}
-                containerRef={baseContainerRef}
-                enableHover={false}
-                density={deviceType === 'mobile' ? 60 : 100}
-                onSettled={handleParticleSettled}
-                scrollYProgress={scrollYProgress}
-                // right image: gentle push right
-                pushVector={[1.5, -2.0]}
-              />
-              <ParticleImage
-                src="/bridge.webp"
-                width={5.6}
-                height={4.2}
-                containerRef={overlayContainerRef}
-                enableHover={false}
-                // The landscape image has a 4:3 aspect ratio. To match the ~13,300 total particles of the portrait image,
-                // we need a higher X-axis density (130 * (130 * 0.75) ≈ 12,600).
-                density={deviceType === 'mobile' ? 80 : 130}
-                onSettled={handleParticleSettled}
-                scrollYProgress={scrollYProgress}
-                // left image: moderate push left. Since force is now driven by shatterProgress, this is enough to clear the center immediately.
-                pushVector={[-2.0, -2.0]}
-              />
-            </Suspense>
-          </Canvas>
+          <Suspense fallback={null}>
+            <ParticleScene
+              deviceType={deviceType}
+              scrollYProgress={scrollYProgress}
+              handleParticleSettled={handleParticleSettled}
+              baseContainerRef={baseContainerRef}
+              overlayContainerRef={overlayContainerRef}
+              heroImg={HERO_IMG}
+            />
+          </Suspense>
         </div>
 
         {/* Editorial Overlapping Collage */}
