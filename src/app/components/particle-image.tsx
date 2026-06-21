@@ -14,6 +14,7 @@ uniform vec2 uPushDir;
 uniform vec2 uMouse;
 uniform vec2 uUvScale;
 uniform float uDensity;
+uniform float uPointBaseSize;
 uniform sampler2D uTexture;
 
 varying vec2 vUv;
@@ -67,7 +68,7 @@ void main() {
 
   // Use LOCAL shatter progress so bright particles stay far away until their turn
   float localShatter = convergeFactor; // 1.0 = scattered, 0.0 = converged
-  float shatterAmount = localShatter * 15.0; // Increased scatter distance for more drama
+  float shatterAmount = localShatter * 10.0; // Restored normal scatter distance
   
   float randomAngle = hash(uv) * 6.28318;
   float radius = hash(uv + 0.1);
@@ -110,16 +111,11 @@ void main() {
   
   vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
   
-  // Converged size must perfectly fill the grid.
-  // We use the exact physical pixel size calculated from density.
-  float convergedSize = 75.0 * (500.0 / uDensity);
-  float scatteredSize = mix(40.0, 120.0, starBrightness);
+  // Converged size must perfectly fill the grid on screen (exact physical pixels).
+  // Scattered size has perspective applied so distant embers look smaller.
+  float scatteredScreenSize = mix(40.0, 120.0, starBrightness) * (1.0 / -mvPosition.z);
   
-  // When localShatter is high (scattered), use scatteredSize.
-  // When localShatter approaches 0 (converged), use convergedSize.
-  float finalSize = mix(convergedSize, scatteredSize, smoothstep(0.0, 0.1, localShatter));
-  
-  gl_PointSize = finalSize * (1.0 / -mvPosition.z);
+  gl_PointSize = mix(uPointBaseSize, scatteredScreenSize, smoothstep(0.0, 0.1, localShatter));
   gl_Position = projectionMatrix * mvPosition;
 }
 `;
@@ -232,7 +228,8 @@ export function ParticleImage({ src, width = 4, height = 5, density = 500, scale
       uTexture: { value: texture },
       uUvScale: { value: new THREE.Vector2(uvScaleX, uvScaleY) },
       uPlaneRatio: { value: new THREE.Vector2(width, height) },
-      uDensity: { value: density }
+      uDensity: { value: density },
+      uPointBaseSize: { value: 1.0 }
     };
   }
   const uniforms = uniformsRef.current;
@@ -269,6 +266,14 @@ export function ParticleImage({ src, width = 4, height = 5, density = 500, scale
     if (scrollYProgress) {
       shaderRef.current.uniforms.uScrollProgress.value = scrollYProgress.get();
     }
+    
+    // Calculate exact physical pixel size needed to tile perfectly
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const gridSpacingWorld = width / density;
+    const gridSpacingCSS = gridSpacingWorld * (state.size.width / state.viewport.width);
+    const gridSpacingPhysical = gridSpacingCSS * dpr;
+    // Add a tiny 10% overlap to prevent rounding gaps, but small enough to avoid bleed
+    shaderRef.current.uniforms.uPointBaseSize.value = gridSpacingPhysical * 1.1;
     
     let targetConverge = 1.0;
     
@@ -341,15 +346,9 @@ export function ParticleImage({ src, width = 4, height = 5, density = 500, scale
       groupRef.current.position.x = (nx - 0.5) * vW;
       groupRef.current.position.y = -(compensatedNy - 0.5) * vH;
 
-      // Compensate for point size bleed. gl_PointSize is in physical pixels.
-      const glPointSize = 75.0 * (500.0 / density) * (1.0 / dist);
-      const dpr = state.viewport.dpr || 1;
-      const particleWorldSize = ((glPointSize / dpr) / cr.height) * vH;
-
-      // Scale so the plane's VISUAL size (including particle bleed) perfectly matches the DOM container
+      // Scale so the plane matches the container's visual size
       const containerWorldH = (tr.height / cr.height) * vH;
-      const visualHeight = height + particleWorldSize;
-      groupRef.current.scale.setScalar(containerWorldH / visualHeight);
+      groupRef.current.scale.setScalar(containerWorldH / height);
     }
   });
 
