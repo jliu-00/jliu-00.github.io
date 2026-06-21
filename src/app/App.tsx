@@ -170,9 +170,10 @@ export default function App() {
   const isOverlayShattering = isCanvasVisible;
   
   // parallax depths for the floating layers
-  const baseImgY = useTransform(scrollYProgress, [0, 1], [0, -180]);
-  const overlayImgY = useTransform(scrollYProgress, [0, 1], [0, -380]);
-  const titleY = useTransform(scrollYProgress, [0, 1], [0, 180]);
+  // Images move downwards (positive Y) to counter scroll and stay on screen longer
+  const baseImgY = useTransform(scrollYProgress, [0, 1], [0, 200]);
+  const overlayImgY = useTransform(scrollYProgress, [0, 1], [0, 350]);
+  const titleY = useTransform(scrollYProgress, [0, 1], [0, 240]);
   const accentY = useTransform(scrollYProgress, [0, 0.6], [0, -160]);
   const buttonsY = useTransform(scrollYProgress, [0, 1], [0, 300]);
 
@@ -220,7 +221,7 @@ export default function App() {
         </svg>
 
         {/* Single hero-level canvas for all particle effects */}
-        <div className={`absolute inset-0 z-[3] pointer-events-none transition-opacity duration-300 ease-in-out ${isCanvasVisible ? 'opacity-100' : 'opacity-0'}`}>
+        <div className={`fixed inset-0 z-[3] pointer-events-none transition-opacity duration-300 ease-in-out ${isCanvasVisible ? 'opacity-100' : 'opacity-0'}`}>
           <Canvas frameloop={isCanvasVisible ? "always" : "demand"} style={{ pointerEvents: 'none' }} dpr={deviceType === 'desktop' ? [1, 1.5] : 1} camera={{ position: [0, 0, 35], fov: 50 }} gl={{ powerPreference: "high-performance", antialias: false }}>
             <Suspense fallback={null}>
               <ParticleImage
@@ -231,6 +232,9 @@ export default function App() {
                 enableHover={false}
                 density={deviceType === 'mobile' ? 70 : 100}
                 onSettled={handleParticleSettled}
+                scrollYProgress={scrollYProgress}
+                // right image: gentle push right
+                pushVector={[1.5, -2.0]}
               />
               <ParticleImage
                 src="/IG.jpg"
@@ -238,8 +242,13 @@ export default function App() {
                 height={4.2}
                 containerRef={overlayContainerRef}
                 enableHover={false}
-                density={deviceType === 'mobile' ? 70 : 100}
+                // IG.jpg is landscape (4:3 aspect ratio). To match the ~13,300 total particles of the portrait image,
+                // we need a higher X-axis density (130 * (130 * 0.75) ≈ 12,600).
+                density={deviceType === 'mobile' ? 90 : 130}
                 onSettled={handleParticleSettled}
+                scrollYProgress={scrollYProgress}
+                // left image: moderate push left. Since force is now driven by shatterProgress, this is enough to clear the center immediately.
+                pushVector={[-2.0, -2.0]}
               />
             </Suspense>
           </Canvas>

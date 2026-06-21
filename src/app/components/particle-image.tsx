@@ -1,14 +1,16 @@
-import { useRef, useMemo, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useTexture } from '@react-three/drei';
 import * as THREE from 'three';
+import { MotionValue } from 'framer-motion';
 
 const vertexShader = `
 precision highp float;
 
 uniform float uTime;
-uniform float uScrollVelocity;
 uniform float uConverge;
+uniform float uScrollProgress;
+uniform vec2 uPushDir;
 uniform vec2 uMouse;
 uniform vec2 uUvScale;
 uniform float uDensity;
@@ -17,6 +19,7 @@ varying vec2 vUv;
 varying vec2 vOriginalUv;
 varying float vConvergeFactor;
 varying float vStarBrightness;
+varying float vAlphaDecay;
 
 float hash(vec2 p) {
   p = p * vec2(1234.56, 789.12);
@@ -26,9 +29,8 @@ float hash(vec2 p) {
 }
 
 void main() {
-  // Apply object-cover scaling so particles sample the correct image regions
   vUv = (uv - 0.5) * uUvScale + 0.5;
-  vOriginalUv = uv; // keep 0-1 for plane coordinates
+  vOriginalUv = uv;
   
   vec3 pos = position;
   
@@ -41,14 +43,12 @@ void main() {
   float eased = 1.0 - pp * pp * pp;
   float convergeFactor = 1.0 - eased;
   
-  // Guarantee absolute zero offset on all GPU backends when fully converged
   if (uConverge >= 0.999) {
     convergeFactor = 0.0;
   }
   
   vConvergeFactor = convergeFactor;
   
-  // Mouse repel - fade out as we converge so they lock into place perfectly
   vec2 mouseOffset = uv - 0.5;
   float dist = distance(mouseOffset, uMouse);
   float force = smoothstep(0.2, 0.0, dist);
@@ -57,13 +57,13 @@ void main() {
   pos.x += force * normalize(mouseOffset).x * 2.0 * repelStrength;
   pos.y += force * normalize(mouseOffset).y * 2.0 * repelStrength;
 
-  float shatterAmount = clamp(uScrollVelocity, 0.0, 10.0);
+  float shatterProgress = 1.0 - uConverge;
+  float shatterAmount = shatterProgress * 10.0;
   
-  // --- Galaxy scatter distribution ---
   float randomAngle = hash(uv) * 6.28318;
   float radius = hash(uv + 0.1);
   
-  // Star brightness: power-law (most are tiny pinpoints, rare bright stars)
+  // Star brightness: power-law for rare bright embers
   float starRand = hash(uv + 0.5);
   float starBrightness = pow(starRand, 3.5);
   vStarBrightness = starBrightness;
@@ -77,11 +77,23 @@ void main() {
   float distFromCenter = length(uv - 0.5);
   float coreFactor = smoothstep(0.0, 0.45, distFromCenter) * 0.7 + 0.3;
   
-  // Speed with galaxy band concentration
+  // Original Galaxy Speed
   float speed = (radius * 2.2 + 0.3) * coreFactor * (bandFocus * 0.7 + 0.3);
   
-  float windX = cos(randomAngle) * speed - radius * 1.0;
-  float windY = sin(randomAngle) * speed;
+  // Use shatterProgress for X force so they clear the center IMMEDIATELY when scattered.
+  // Use uScrollProgress for Y force so they gently drift down the entire length of the page.
+  float scrollForceX = shatterProgress * 0.6;
+  float scrollForceY = uScrollProgress * 0.5;
+  
+  float emberDriftY = (hash(uv + 0.8) - 0.3) * uTime * 0.5 * shatterProgress;
+  
+  // Constrain random lateral spread when scrolling.
+  // 1.0 = wide explosion (used during initial entrance animation).
+  // 0.6 = moderate stream (used during downward scroll to naturally fill the 15-30% edge margins).
+  float lateralConstraint = mix(1.0, 0.6, smoothstep(0.0, 0.2, uScrollProgress));
+  
+  float windX = (cos(randomAngle) * speed - radius * 1.0) * lateralConstraint + uPushDir.x * scrollForceX;
+  float windY = sin(randomAngle) * speed + emberDriftY + uPushDir.y * scrollForceY;
   float windZ = (hash(uv + 0.2) - 0.5) * 0.6;
   
   pos.x += windX * shatterAmount * convergeFactor;
@@ -90,15 +102,11 @@ void main() {
   
   vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
   
-  // --- Point size ---
-  // Converged: uniform size for seamless image reconstruction. Scale dynamically based on density.
   float convergedSize = 75.0 * (500.0 / uDensity);
-  // Scattered: pinpoint stars (mostly tiny, rare bright)
-  float scatteredSize = mix(5.0, 80.0, starBrightness);
+  float scatteredSize = mix(40.0, 120.0, starBrightness);
   
-  // Size transitions to uniform BEFORE position finishes converging
-  // This eliminates blobs from large particles still in transit
-  float sizeBlend = smoothstep(0.0, 0.2, convergeFactor);
+  // Make particles shrink as they begin to scatter
+  float sizeBlend = smoothstep(0.0, 0.05, convergeFactor);
   float finalSize = mix(convergedSize, scatteredSize, sizeBlend);
   
   gl_PointSize = finalSize * (1.0 / -mvPosition.z);
@@ -109,6 +117,8 @@ void main() {
 const fragmentShader = `
 uniform sampler2D uTexture;
 uniform vec2 uPlaneRatio;
+uniform float uTime;
+uniform float uScrollProgress;
 varying vec2 vUv;
 varying vec2 vOriginalUv;
 varying float vConvergeFactor;
@@ -116,31 +126,47 @@ varying float vStarBrightness;
 
 void main() {
   vec4 texColor = texture2D(uTexture, vUv);
-  if (texColor.a < 0.1) discard;
+  
+  // Calculate alpha threshold for darkness
+  float luminance = dot(texColor.rgb, vec3(0.299, 0.587, 0.114));
+  float isDark = 1.0 - luminance;
+  float alphaThreshold = smoothstep(0.0, 0.3, isDark) * 0.7;
+  float fadeAlpha = 1.0 - alphaThreshold;
+  
+  if (texColor.a * fadeAlpha < 0.01) discard;
   
   vec2 circCoord = 2.0 * gl_PointCoord - 1.0;
   float r2 = dot(circCoord, circCoord);
   
-  // Transition from square (converged) to circle (scattered)
   float scattered = smoothstep(0.0, 0.2, vConvergeFactor);
   
-  // Simulate CSS rounded-[2rem] when converged (clip corners)
-  // vOriginalUv is 0-1 across the plane. 
-  vec2 planeDist = abs(vOriginalUv - 0.5) * 2.0; // 0 to 1
+  vec2 planeDist = abs(vOriginalUv - 0.5) * 2.0; 
   vec2 sizeRadius = vec2(1.0) - vec2(0.15) * vec2(1.0, uPlaneRatio.y/uPlaneRatio.x); 
   if (scattered < 0.1 && planeDist.x > sizeRadius.x && planeDist.y > sizeRadius.y) {
     vec2 cornerDist = (planeDist - sizeRadius) / (vec2(1.0) - sizeRadius);
     if (length(cornerDist) > 1.0) discard;
   }
   
-  // Square when converged (no clipping), circle when scattered
   if (r2 > mix(4.0, 1.0, scattered)) discard;
   
-  // Star glow: brighter stars get softer edges, dim stars are hard points
+  // Slow ember flicker effect using uTime
+  float flicker = 1.0;
+  if (vStarBrightness > 0.5) {
+      flicker = 0.7 + 0.3 * sin(uTime * 2.0 + vOriginalUv.x * 100.0);
+  }
+  
   float glowStrength = scattered * vStarBrightness;
   float glow = 1.0 - smoothstep(0.1, 1.0, r2) * glowStrength * 0.6;
   
-  gl_FragColor = vec4(texColor.rgb, texColor.a * glow);
+  // For scroll fading: ensure the floor is high enough (0.15) 
+  float alphaDecay = smoothstep(0.0, 0.4, uScrollProgress);
+  float minAlphaFloor = mix(0.15, 0.8, vStarBrightness);
+  float scrollAlpha = mix(1.0, minAlphaFloor, alphaDecay);
+  
+  float finalAlpha = texColor.a * fadeAlpha * glow * scrollAlpha * flicker;
+  if (finalAlpha < 0.01) discard;
+  
+  gl_FragColor = vec4(texColor.rgb, finalAlpha);
 }
 `;
 
@@ -153,9 +179,11 @@ interface ParticleImageProps {
   enableHover?: boolean;
   onSettled?: () => void;
   containerRef?: React.RefObject<HTMLElement | null>;
+  scrollYProgress?: MotionValue<number>;
+  pushVector?: [number, number];
 }
 
-export function ParticleImage({ src, width = 4, height = 5, density = 500, scale = 1, enableHover = true, onSettled, containerRef }: ParticleImageProps) {
+export function ParticleImage({ src, width = 4, height = 5, density = 500, scale = 1, enableHover = true, onSettled, containerRef, scrollYProgress, pushVector = [0, 0] }: ParticleImageProps) {
   useTexture.preload(src);
   const texture = useTexture(src);
   const shaderRef = useRef<THREE.ShaderMaterial>(null);
@@ -178,10 +206,13 @@ export function ParticleImage({ src, width = 4, height = 5, density = 500, scale
       }
     }
     
+    let pushVec = new THREE.Vector2(pushVector[0], pushVector[1]);
+    
     uniformsRef.current = {
       uTime: { value: 0 },
-      uScrollVelocity: { value: 0 },
-      uConverge: { value: 0 }, // starts scattered (0) until scroll stops
+      uConverge: { value: 0 }, // 0 = scattered, 1 = converged
+      uScrollProgress: { value: 0 },
+      uPushDir: { value: pushVec },
       uMouse: { value: new THREE.Vector2(999.0, 999.0) },
       uTexture: { value: texture },
       uUvScale: { value: new THREE.Vector2(uvScaleX, uvScaleY) },
@@ -197,13 +228,16 @@ export function ParticleImage({ src, width = 4, height = 5, density = 500, scale
       uniformsRef.current.uDensity.value = density;
     }
   }, [density]);
+  
+  // Keep pushVector in sync
+  useEffect(() => {
+    if (uniformsRef.current) {
+      uniformsRef.current.uPushDir.value.set(pushVector[0], pushVector[1]);
+    }
+  }, [pushVector[0], pushVector[1]]);
 
-  const currentShatter = useRef(6.0); // Start scattered for entrance effect
-  const lastScrollY = useRef(typeof window !== 'undefined' ? window.scrollY : 0);
-  const wasShattered = useRef(true); // Ensure onSettled fires after initial convergence
-  const stoppedFrames = useRef(0);
-  const convergeTimer = useRef(0);
-  const isConverging = useRef(false);
+  const entranceTimer = useRef(0);
+  const isEntrance = useRef(true); // Start with entrance animation
   const CONVERGE_DURATION = 2.5;
   
   const onSettledRef = useRef(onSettled);
@@ -216,53 +250,50 @@ export function ParticleImage({ src, width = 4, height = 5, density = 500, scale
     
     shaderRef.current.uniforms.uTime.value = state.clock.elapsedTime;
     
-    const currentScrollY = window.scrollY;
-    const dy = currentScrollY - lastScrollY.current;
-    lastScrollY.current = currentScrollY;
-    
-    const isStrongScroll = Math.abs(dy) > 1.5;
-    const isAnyScroll = Math.abs(dy) > 0.1;
-    
-    if (isAnyScroll && !isConverging.current) {
-      stoppedFrames.current = 0;
-      const desiredVelocity = 4.0 + Math.min(Math.abs(dy) * 0.5, 6.0);
-      currentShatter.current = THREE.MathUtils.lerp(currentShatter.current, desiredVelocity, delta * 15.0);
-      if (currentShatter.current > 0.1) wasShattered.current = true;
-      shaderRef.current.uniforms.uConverge.value = 0;
-    } else if (isStrongScroll && isConverging.current) {
-      isConverging.current = false;
-      convergeTimer.current = 0;
-      shaderRef.current.uniforms.uConverge.value = 0;
-      stoppedFrames.current = 0;
-      const desiredVelocity = 4.0 + Math.min(Math.abs(dy) * 0.5, 6.0);
-      currentShatter.current = THREE.MathUtils.lerp(currentShatter.current, desiredVelocity, delta * 15.0);
-    } else if (!isAnyScroll && !isConverging.current && currentShatter.current > 0) {
-      stoppedFrames.current++;
-      if (stoppedFrames.current >= 10) {
-        isConverging.current = true;
-        convergeTimer.current = 0;
-      }
+    // Pass global scroll progress for alpha decay
+    if (scrollYProgress) {
+      shaderRef.current.uniforms.uScrollProgress.value = scrollYProgress.get();
     }
     
-    if (isConverging.current) {
-      convergeTimer.current += delta;
-      const rawT = Math.min(convergeTimer.current / CONVERGE_DURATION, 1.0);
-      shaderRef.current.uniforms.uConverge.value = rawT;
+    let targetConverge = 1.0;
+    
+    // Entrance effect overrides everything until complete,
+    // UNLESS the user starts scrolling, in which case we immediately switch to scroll-driven logic.
+    if (isEntrance.current && window.scrollY < 10) {
+      entranceTimer.current += delta;
+      targetConverge = Math.min(entranceTimer.current / CONVERGE_DURATION, 1.0);
+      shaderRef.current.uniforms.uConverge.value = targetConverge;
       
-      if (rawT >= 1.0) {
-        currentShatter.current = 0;
-        isConverging.current = false;
-        // Do NOT reset uConverge to 0 here!
-        // 0 = scattered, 1.0 = fully converged.
-        // Resetting to 0 causes them to instantly revert to tiny scattered circles and react to mouse repel!
-        if (wasShattered.current) {
-          wasShattered.current = false;
-          onSettledRef.current?.();
+      if (targetConverge >= 1.0) {
+        isEntrance.current = false;
+        onSettledRef.current?.();
+      }
+    } else {
+      isEntrance.current = false; // Ensure it's off if we broke out due to scrolling
+      
+      // Post-entrance: Converge state is strictly mapped to scroll position
+      // Shatter completes within the first 600px of scrolling (before timeline)
+      const shatterScrollRange = 600.0;
+      targetConverge = 1.0 - Math.min(window.scrollY / shatterScrollRange, 1.0);
+      
+      const currentConverge = shaderRef.current.uniforms.uConverge.value;
+      
+      if (targetConverge < currentConverge) {
+        // Scrolling DOWN (target is lower than current)
+        // Images shatter quickly and responsively
+        shaderRef.current.uniforms.uConverge.value = THREE.MathUtils.lerp(currentConverge, targetConverge, delta * 12.0);
+      } else if (targetConverge > currentConverge) {
+        // Scrolling UP (target is higher than current)
+        // Particles reassemble with moderate inertia (faster than before)
+        shaderRef.current.uniforms.uConverge.value = THREE.MathUtils.lerp(currentConverge, targetConverge, delta * 3.0);
+        
+        // If we reached the top, trigger onSettled to crossfade back to static <img>
+        if (targetConverge === 1.0 && shaderRef.current.uniforms.uConverge.value > 0.99) {
+           shaderRef.current.uniforms.uConverge.value = 1.0;
+           onSettledRef.current?.();
         }
       }
     }
-    
-    shaderRef.current.uniforms.uScrollVelocity.value = currentShatter.current;
     
     if (hovered) {
       shaderRef.current.uniforms.uMouse.value.set(state.pointer.x / 2, state.pointer.y / 2);
@@ -284,11 +315,16 @@ export function ParticleImage({ src, width = 4, height = 5, density = 500, scale
 
       // Container center in normalized canvas coords (0 = left/top, 1 = right/bottom)
       const nx = (tr.left - cr.left + tr.width / 2) / cr.width;
-      const ny = (tr.top - cr.top + tr.height / 2) / cr.height;
+      
+      // When the image shatters, we want to detach the particles from the DOM's upward scroll
+      // so they don't get dragged thousands of pixels above the screen.
+      const shatterRatio = 1.0 - (shaderRef.current.uniforms.uConverge.value || 0);
+      const scrollCompensationPixels = window.scrollY * shatterRatio;
+      const compensatedNy = (tr.top + scrollCompensationPixels - cr.top + tr.height / 2) / cr.height;
 
       // Convert to world space (Y flipped)
       groupRef.current.position.x = (nx - 0.5) * vW;
-      groupRef.current.position.y = -(ny - 0.5) * vH;
+      groupRef.current.position.y = -(compensatedNy - 0.5) * vH;
 
       // Scale so the plane matches the container's visual size
       const containerWorldH = (tr.height / cr.height) * vH;
