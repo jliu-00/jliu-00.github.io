@@ -40,19 +40,20 @@ void main() {
   float vertLuminance = dot(texColorVert.rgb, vec3(0.299, 0.587, 0.114));
   
   // Dark areas assemble first, bright areas assemble later.
-  // Add 30% random noise so it doesn't look like a perfectly flat gradient.
-  float arriveT = mix(vertLuminance, hash(uv + 0.3), 0.3);
+  // Reduce random noise to 15% so the structural shape (bridge) is much more pronounced
+  float arriveT = mix(vertLuminance, hash(uv + 0.3), 0.15);
   
-  float pStart = arriveT * 0.4;
-  float pEnd = pStart + 0.6;
+  // Widen the gap: darks finish by 0.3, lights don't even start until 0.7
+  float pStart = arriveT * 0.7;
+  float pEnd = pStart + 0.3;
   float particleProgress = smoothstep(pStart, pEnd, uConverge);
-  float pp = 1.0 - particleProgress;
-  float eased = 1.0 - pp * pp * pp;
-  float convergeFactor = 1.0 - eased;
   
-  if (uConverge >= 0.999) {
-    convergeFactor = 0.0;
-  }
+  // pp goes from 1.0 (scattered) to 0.0 (converged)
+  float pp = 1.0 - particleProgress;
+  // easeOutCubic
+  float eased = 1.0 - pp * pp * pp;
+  // convergeFactor is 1.0 when scattered, 0.0 when converged
+  float convergeFactor = 1.0 - particleProgress;
   
   vConvergeFactor = convergeFactor;
   
@@ -64,8 +65,9 @@ void main() {
   pos.x += force * normalize(mouseOffset).x * 2.0 * repelStrength;
   pos.y += force * normalize(mouseOffset).y * 2.0 * repelStrength;
 
-  float shatterProgress = 1.0 - uConverge;
-  float shatterAmount = shatterProgress * 10.0;
+  // Use LOCAL shatter progress so bright particles stay far away until their turn
+  float localShatter = convergeFactor; // 1.0 = scattered, 0.0 = converged
+  float shatterAmount = localShatter * 15.0; // Increased scatter distance for more drama
   
   float randomAngle = hash(uv) * 6.28318;
   float radius = hash(uv + 0.1);
@@ -87,34 +89,35 @@ void main() {
   // Original Galaxy Speed
   float speed = (radius * 2.2 + 0.3) * coreFactor * (bandFocus * 0.7 + 0.3);
   
-  // Use shatterProgress for X force so they clear the center IMMEDIATELY when scattered.
-  // Use uScrollProgress for Y force so they gently drift down the entire length of the page.
-  float scrollForceX = shatterProgress * 0.6;
+  // scrollForce uses global shatterProgress so scrolling pushes everything, 
+  // but initial entrance only pulls local particles
+  float globalShatter = 1.0 - uConverge;
+  float scrollForceX = globalShatter * 0.6;
   float scrollForceY = uScrollProgress * 0.5;
   
-  float emberDriftY = (hash(uv + 0.8) - 0.3) * uTime * 0.5 * shatterProgress;
+  float emberDriftY = (hash(uv + 0.8) - 0.3) * uTime * 0.5 * localShatter;
   
-  // Constrain random lateral spread when scrolling.
-  // 1.0 = wide explosion (used during initial entrance animation).
-  // 0.6 = moderate stream (used during downward scroll to naturally fill the 15-30% edge margins).
   float lateralConstraint = mix(1.0, 0.6, smoothstep(0.0, 0.2, uScrollProgress));
   
   float windX = (cos(randomAngle) * speed - radius * 1.0) * lateralConstraint + uPushDir.x * scrollForceX;
   float windY = sin(randomAngle) * speed + emberDriftY + uPushDir.y * scrollForceY;
   float windZ = (hash(uv + 0.2) - 0.5) * 0.6;
   
-  pos.x += windX * shatterAmount * convergeFactor;
-  pos.y += windY * shatterAmount * convergeFactor;
-  pos.z += windZ * shatterAmount * convergeFactor;
+  // Multiply by localShatter instead of global shatterAmount
+  pos.x += windX * shatterAmount;
+  pos.y += windY * shatterAmount;
+  pos.z += windZ * shatterAmount;
   
   vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
   
+  // Converged size must perfectly fill the grid.
+  // We use the exact physical pixel size calculated from density.
   float convergedSize = 75.0 * (500.0 / uDensity);
   float scatteredSize = mix(40.0, 120.0, starBrightness);
   
-  // Make particles shrink as they begin to scatter
-  float sizeBlend = smoothstep(0.0, 0.05, convergeFactor);
-  float finalSize = mix(convergedSize, scatteredSize, sizeBlend);
+  // When localShatter is high (scattered), use scatteredSize.
+  // When localShatter approaches 0 (converged), use convergedSize.
+  float finalSize = mix(convergedSize, scatteredSize, smoothstep(0.0, 0.1, localShatter));
   
   gl_PointSize = finalSize * (1.0 / -mvPosition.z);
   gl_Position = projectionMatrix * mvPosition;
@@ -126,6 +129,7 @@ uniform sampler2D uTexture;
 uniform vec2 uPlaneRatio;
 uniform float uTime;
 uniform float uScrollProgress;
+uniform float uConverge;
 varying vec2 vUv;
 varying vec2 vOriginalUv;
 varying float vConvergeFactor;
@@ -145,16 +149,20 @@ void main() {
   vec2 circCoord = 2.0 * gl_PointCoord - 1.0;
   float r2 = dot(circCoord, circCoord);
   
-  float scattered = smoothstep(0.0, 0.2, vConvergeFactor);
+  // Shape logic: draw a circle when scattered, but a full square when completely converged.
+  // This ensures there are no gaps between particles when they form the final image.
+  float isScattered = smoothstep(0.99, 1.0, 1.0 - uConverge); // 1.0 if not perfectly converged
   
   vec2 planeDist = abs(vOriginalUv - 0.5) * 2.0; 
   vec2 sizeRadius = vec2(1.0) - vec2(0.15) * vec2(1.0, uPlaneRatio.y/uPlaneRatio.x); 
-  if (scattered < 0.1 && planeDist.x > sizeRadius.x && planeDist.y > sizeRadius.y) {
+  if (isScattered < 0.1 && planeDist.x > sizeRadius.x && planeDist.y > sizeRadius.y) {
     vec2 cornerDist = (planeDist - sizeRadius) / (vec2(1.0) - sizeRadius);
     if (length(cornerDist) > 1.0) discard;
   }
   
-  if (r2 > mix(4.0, 1.0, scattered)) discard;
+  // If scattered, discard outside circle (r2 > 1.0).
+  // If perfectly converged, keep the whole square (r2 > 4.0 is impossible, so keeps all).
+  if (r2 > mix(4.0, 1.0, isScattered)) discard;
   
   // Slow ember flicker effect using uTime
   float flicker = 1.0;
@@ -162,7 +170,7 @@ void main() {
       flicker = 0.7 + 0.3 * sin(uTime * 2.0 + vOriginalUv.x * 100.0);
   }
   
-  float glowStrength = scattered * vStarBrightness;
+  float glowStrength = isScattered * vStarBrightness;
   float glow = 1.0 - smoothstep(0.1, 1.0, r2) * glowStrength * 0.6;
   
   // For scroll fading: ensure the floor is high enough (0.15) 

@@ -11,11 +11,12 @@ interface ParticleSceneProps {
   overlayContainerRef: React.RefObject<HTMLDivElement | null>;
   heroImg: string;
   isCanvasVisible: boolean;
+  isCanvasFrozen: boolean;
 }
 
-export const ParticleScene = ({ deviceType, scrollYProgress, handleParticleSettled, baseContainerRef, overlayContainerRef, heroImg, isCanvasVisible }: ParticleSceneProps) => {
+export const ParticleScene = ({ deviceType, scrollYProgress, handleParticleSettled, baseContainerRef, overlayContainerRef, heroImg, isCanvasVisible, isCanvasFrozen }: ParticleSceneProps) => {
   return (
-    <Canvas frameloop={isCanvasVisible ? "always" : "demand"} style={{ pointerEvents: 'none' }} dpr={deviceType === 'desktop' ? [1, 1.5] : 1} camera={{ position: [0, 0, 35], fov: 50 }} gl={{ powerPreference: "high-performance", antialias: false }}>
+    <Canvas frameloop={isCanvasFrozen ? "demand" : "always"} style={{ pointerEvents: 'none' }} dpr={deviceType === 'desktop' ? [1, 1.5] : 1} camera={{ position: [0, 0, 35], fov: 50 }} gl={{ powerPreference: "high-performance", antialias: false }}>
       <Suspense fallback={null}>
         <ParticleImage
           src={heroImg}
@@ -37,6 +38,7 @@ export const ParticleScene = ({ deviceType, scrollYProgress, handleParticleSettl
           density={deviceType === 'mobile' ? 67 : 130}
           onSettled={handleParticleSettled}
           scrollYProgress={scrollYProgress}
+          pushVector={[-2.0, -2.0]}
         />
       </Suspense>
     </Canvas>

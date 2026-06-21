@@ -141,6 +141,7 @@ export default function App() {
   const { scrollYProgress } = useScroll();
 
   const [isCanvasVisible, setIsCanvasVisible] = useState(true);
+  const [isCanvasFrozen, setIsCanvasFrozen] = useState(false);
   const settledCount = useRef(0);
   const totalParticleImages = 2; // Portrait + Landscape
   
@@ -148,6 +149,7 @@ export default function App() {
     settledCount.current += 1;
     if (settledCount.current >= totalParticleImages) {
       setIsCanvasVisible(false);
+      setTimeout(() => setIsCanvasFrozen(true), 500);
       settledCount.current = 0;
     }
   }, []);
@@ -155,6 +157,7 @@ export default function App() {
   useEffect(() => {
     const handleScroll = () => {
       setIsCanvasVisible(true);
+      setIsCanvasFrozen(false);
       settledCount.current = 0;
     };
     
@@ -229,6 +232,7 @@ export default function App() {
                 overlayContainerRef={overlayContainerRef}
                 heroImg={HERO_IMG}
                 isCanvasVisible={isCanvasVisible}
+                isCanvasFrozen={isCanvasFrozen}
               />
             </Suspense>
           </DelayedMount>
