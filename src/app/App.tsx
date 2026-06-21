@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback, Suspense } from "react";
+import { useEffect, useRef, useState, useCallback, Suspense, lazy } from "react";
 import { motion, useScroll, useTransform, useVelocity, useSpring, useMotionValueEvent } from "motion/react";
 import { Canvas } from "@react-three/fiber";
 import { Github, Linkedin, Instagram, Moon, Sun, ArrowDown } from "lucide-react";
@@ -7,9 +7,10 @@ import { MagneticPin } from "./components/magnetic-pin";
 import { ParticleImage } from "./components/particle-image";
 import { ScrambledText } from "./components/scrambled-text";
 import { XiaohongshuIcon } from "./components/icons";
-import { TintWordCTA } from "./components/tintword-cta";
-import { CareerTimeline } from "./components/career-timeline";
 import { ImageWithFallback } from "./components/figma/ImageWithFallback";
+
+const CareerTimeline = lazy(() => import("./components/career-timeline").then(m => ({ default: m.CareerTimeline })));
+const TintWordCTA = lazy(() => import("./components/tintword-cta").then(m => ({ default: m.TintWordCTA })));
 
 const HERO_IMG = "/airplane.webp";
 export default function App() {
@@ -136,13 +137,6 @@ export default function App() {
     stiffness: 400
   });
 
-  const [scrollSpeed, setScrollSpeed] = useState(0);
-  useMotionValueEvent(smoothVelocity, "change", (latest) => {
-    setScrollSpeed(Math.abs(latest));
-  });
-
-
-
   const [isCanvasVisible, setIsCanvasVisible] = useState(true);
   const settledCount = useRef(0);
   const totalParticleImages = 2; // Portrait + Landscape
@@ -242,7 +236,7 @@ export default function App() {
                 height={4.2}
                 containerRef={overlayContainerRef}
                 enableHover={false}
-                // IG.jpg is landscape (4:3 aspect ratio). To match the ~13,300 total particles of the portrait image,
+                // The landscape image has a 4:3 aspect ratio. To match the ~13,300 total particles of the portrait image,
                 // we need a higher X-axis density (130 * (130 * 0.75) ≈ 12,600).
                 density={deviceType === 'mobile' ? 80 : 130}
                 onSettled={handleParticleSettled}
@@ -257,7 +251,7 @@ export default function App() {
         {/* Editorial Overlapping Collage */}
         <div className="absolute right-[0%] top-[10%] z-0 w-[90vw] h-[60vh] md:right-[5%] md:top-[12%] md:w-[55vw] max-w-[640px] md:h-[80vh] pointer-events-none">
           
-          {/* Base Layer: Portrait Photo (Profie.jpg) */}
+          {/* Base Layer: Portrait Photo */}
           <motion.div
             style={{ y: baseImgY, zIndex: 1 }}
             whileHover={{ scale: 1.05, rotate: 2, zIndex: 20 }}
@@ -279,7 +273,7 @@ export default function App() {
             </div>
           </motion.div>
 
-          {/* Overlay Layer: Landscape Photo (IG.jpg) */}
+          {/* Overlay Layer: Landscape Photo */}
           <motion.div
             style={{ y: overlayImgY, zIndex: 2 }}
             whileHover={{ scale: 1.03, rotate: -2, zIndex: 20 }}
@@ -397,11 +391,15 @@ export default function App() {
 
       {/* ================= TIMELINE ================= */}
       <div className="pt-[15vh]">
-        <CareerTimeline />
+        <Suspense fallback={<div className="w-full min-h-[100vh] md:min-h-[60vh]" />}>
+          <CareerTimeline />
+        </Suspense>
       </div>
 
       {/* ================= TINTWORD CTA ================= */}
-      <TintWordCTA />
+      <Suspense fallback={<div className="w-full min-h-[50vh] md:min-h-[40vh]" />}>
+        <TintWordCTA />
+      </Suspense>
 
       {/* ================= FOOTER ================= */}
       <footer className="mx-auto w-full max-w-[1400px] px-6 pb-16 pt-[10vh] md:px-16">
