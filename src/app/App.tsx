@@ -126,9 +126,8 @@ export default function App() {
     return () => window.removeEventListener('resize', checkDevice);
   }, []);
 
-  const cFactor = deviceType === 'mobile' ? 3 : deviceType === 'tablet' ? 5 : 7;
-  // inset % = -((cFactor - 1) / 2) * 100
-  const insetPercent = -((cFactor - 1) / 2) * 100;
+  const baseContainerRef = useRef<HTMLDivElement>(null);
+  const overlayContainerRef = useRef<HTMLDivElement>(null);
 
   const { scrollYProgress } = useScroll();
   const rawVelocity = useVelocity(scrollYProgress);
@@ -220,6 +219,32 @@ export default function App() {
           />
         </svg>
 
+        {/* Single hero-level canvas for all particle effects */}
+        <div className={`absolute inset-0 z-[3] pointer-events-none transition-opacity duration-300 ease-in-out ${isCanvasVisible ? 'opacity-100' : 'opacity-0'}`}>
+          <Canvas frameloop={isCanvasVisible ? "always" : "demand"} style={{ pointerEvents: 'none' }} dpr={deviceType === 'desktop' ? [1, 1.5] : 1} camera={{ position: [0, 0, 35], fov: 50 }} gl={{ powerPreference: "high-performance", antialias: false }}>
+            <Suspense fallback={null}>
+              <ParticleImage
+                src={HERO_IMG}
+                width={4.2}
+                height={5.6}
+                containerRef={baseContainerRef}
+                enableHover={false}
+                density={deviceType === 'mobile' ? 70 : 100}
+                onSettled={handleParticleSettled}
+              />
+              <ParticleImage
+                src="/IG.jpg"
+                width={5.6}
+                height={4.2}
+                containerRef={overlayContainerRef}
+                enableHover={false}
+                density={deviceType === 'mobile' ? 70 : 100}
+                onSettled={handleParticleSettled}
+              />
+            </Suspense>
+          </Canvas>
+        </div>
+
         {/* Editorial Overlapping Collage */}
         <div className="absolute right-[0%] top-[10%] z-0 w-[90vw] h-[60vh] md:right-[5%] md:top-[12%] md:w-[55vw] max-w-[640px] md:h-[80vh] pointer-events-none">
           
@@ -231,7 +256,8 @@ export default function App() {
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
             className="absolute right-[5%] top-0 w-[65%] md:right-0 md:w-[50%] pointer-events-auto cursor-pointer origin-bottom-right"
           >
-            <div 
+            <div
+              ref={baseContainerRef}
               className={`group relative aspect-[3/4] overflow-visible rounded-[2rem] transition-all duration-500 ${isBaseShattering ? 'bg-transparent shadow-none' : 'bg-muted shadow-2xl shadow-black/10 hover:shadow-[0_30px_60px_rgba(0,0,0,0.2)]'}`}
             >
               <ImageWithFallback
@@ -239,26 +265,6 @@ export default function App() {
                 alt="Jiahong Liu"
                 className={`absolute inset-0 h-full w-full object-cover rounded-[2rem] transition-opacity duration-300 ease-in-out ${isBaseShattering ? 'opacity-0' : 'opacity-100'}`}
               />
-              
-              {/* Overlay Particle Image for interaction - expanded bounds to let particles fly! */}
-              <div 
-                className={`absolute z-0 transition-opacity duration-300 ease-in-out pointer-events-none ${isBaseShattering ? 'opacity-100' : 'opacity-0'}`}
-                style={{ top: `${insetPercent}%`, bottom: `${insetPercent}%`, left: `${insetPercent}%`, right: `${insetPercent}%` }}
-              >
-                <Canvas frameloop={isCanvasVisible ? "always" : "demand"} style={{ pointerEvents: 'none' }} dpr={deviceType === 'desktop' ? [1, 1.5] : 1} camera={{ position: [0, 0, 35], fov: 50 }} gl={{ powerPreference: "high-performance", antialias: false }}>
-                  <Suspense fallback={null}>
-                    <ParticleImage 
-                      src={HERO_IMG}
-                      width={4.2}
-                      height={5.6}
-                      scale={5.82875 / cFactor}
-                      enableHover={deviceType === 'desktop'}
-                      density={deviceType === 'mobile' ? 70 : 100}
-                      onSettled={handleParticleSettled}
-                    />
-                  </Suspense>
-                </Canvas>
-              </div>
               {/* Dark mode intelligent dimmer */}
               <div className={`pointer-events-none absolute inset-0 z-10 rounded-[2rem] bg-black/0 transition-all duration-[1500ms] dark:group-hover:bg-black/0 ${isBaseShattering ? 'opacity-0' : 'dark:bg-black/30 opacity-100'}`} />
             </div>
@@ -272,7 +278,8 @@ export default function App() {
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
             className="absolute bottom-[5%] left-[5%] w-[85%] md:bottom-[15%] md:left-[-30%] md:w-[85%] pointer-events-auto cursor-pointer origin-bottom-left"
           >
-            <div 
+            <div
+              ref={overlayContainerRef}
               className={`group relative aspect-[4/3] overflow-visible rounded-[2rem] transition-all duration-500 ${isOverlayShattering ? 'bg-transparent shadow-none' : 'bg-muted shadow-2xl shadow-black/10 hover:shadow-[0_30px_60px_rgba(0,0,0,0.2)]'}`}
             >
               <ImageWithFallback 
@@ -280,24 +287,6 @@ export default function App() {
                 alt="Static Port"
                 className={`absolute inset-0 h-full w-full object-cover rounded-[2rem] transition-opacity duration-300 ease-in-out ${isOverlayShattering ? 'opacity-0' : 'opacity-100'}`}
               />
-              <div 
-                className={`absolute z-0 transition-opacity duration-300 ease-in-out pointer-events-none ${isOverlayShattering ? 'opacity-100' : 'opacity-0'}`}
-                style={{ top: `${insetPercent}%`, bottom: `${insetPercent}%`, left: `${insetPercent}%`, right: `${insetPercent}%` }}
-              >
-                <Canvas frameloop={isCanvasVisible ? "always" : "demand"} style={{ pointerEvents: 'none' }} dpr={deviceType === 'desktop' ? [1, 1.5] : 1} camera={{ position: [0, 0, 35], fov: 50 }} gl={{ powerPreference: "high-performance", antialias: false }}>
-                  <Suspense fallback={null}>
-                    <ParticleImage 
-                      src="/IG.jpg"
-                      width={5.6}
-                      height={4.2}
-                      scale={7.77166 / cFactor}
-                      enableHover={deviceType === 'desktop'}
-                      density={deviceType === 'mobile' ? 70 : 100}
-                      onSettled={handleParticleSettled}
-                    />
-                  </Suspense>
-                </Canvas>
-              </div>
               {/* Dark mode intelligent dimmer */}
               <div className={`pointer-events-none absolute inset-0 z-10 rounded-[2rem] bg-black/0 transition-all duration-[1500ms] dark:group-hover:bg-black/0 ${isOverlayShattering ? 'opacity-0' : 'dark:bg-black/30 opacity-100'}`} />
             </div>

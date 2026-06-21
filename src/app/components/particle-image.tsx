@@ -152,12 +152,14 @@ interface ParticleImageProps {
   scale?: number;
   enableHover?: boolean;
   onSettled?: () => void;
+  containerRef?: React.RefObject<HTMLElement | null>;
 }
 
-export function ParticleImage({ src, width = 4, height = 5, density = 500, scale = 1, enableHover = true, onSettled }: ParticleImageProps) {
+export function ParticleImage({ src, width = 4, height = 5, density = 500, scale = 1, enableHover = true, onSettled, containerRef }: ParticleImageProps) {
   useTexture.preload(src);
   const texture = useTexture(src);
   const shaderRef = useRef<THREE.ShaderMaterial>(null);
+  const groupRef = useRef<THREE.Group>(null);
   const [hovered, setHovered] = useState(false);
   
   // Store uniforms in a ref so they are NEVER recreated on re-renders (like dark mode toggles)
@@ -267,6 +269,31 @@ export function ParticleImage({ src, width = 4, height = 5, density = 500, scale
     } else {
       shaderRef.current.uniforms.uMouse.value.set(999.0, 999.0);
     }
+
+    // Dynamic positioning: compute world-space position/scale from DOM rects
+    if (containerRef?.current && groupRef.current) {
+      const canvasEl = state.gl.domElement;
+      const cr = canvasEl.getBoundingClientRect();
+      const tr = containerRef.current.getBoundingClientRect();
+
+      const cam = state.camera as THREE.PerspectiveCamera;
+      const vFov = cam.fov * Math.PI / 180;
+      const dist = cam.position.z;
+      const vH = 2 * Math.tan(vFov / 2) * dist;
+      const vW = vH * cam.aspect;
+
+      // Container center in normalized canvas coords (0 = left/top, 1 = right/bottom)
+      const nx = (tr.left - cr.left + tr.width / 2) / cr.width;
+      const ny = (tr.top - cr.top + tr.height / 2) / cr.height;
+
+      // Convert to world space (Y flipped)
+      groupRef.current.position.x = (nx - 0.5) * vW;
+      groupRef.current.position.y = -(ny - 0.5) * vH;
+
+      // Scale so the plane matches the container's visual size
+      const containerWorldH = (tr.height / cr.height) * vH;
+      groupRef.current.scale.setScalar(containerWorldH / height);
+    }
   });
 
   const pointerProps = enableHover ? {
@@ -275,15 +302,17 @@ export function ParticleImage({ src, width = 4, height = 5, density = 500, scale
   } : {};
 
   return (
-    <points scale={scale} {...pointerProps}>
-      <planeGeometry args={[width, height, density, Math.floor(density * (height / width))]} />
-      <shaderMaterial
-        ref={shaderRef}
-        vertexShader={vertexShader}
-        fragmentShader={fragmentShader}
-        uniforms={uniforms}
-        transparent={true}
-      />
-    </points>
+    <group ref={groupRef} scale={containerRef ? undefined : scale}>
+      <points {...pointerProps}>
+        <planeGeometry args={[width, height, density, Math.floor(density * (height / width))]} />
+        <shaderMaterial
+          ref={shaderRef}
+          vertexShader={vertexShader}
+          fragmentShader={fragmentShader}
+          uniforms={uniforms}
+          transparent={true}
+        />
+      </points>
+    </group>
   );
 }
