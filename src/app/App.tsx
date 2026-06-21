@@ -11,7 +11,7 @@ import { TintWordCTA } from "./components/tintword-cta";
 import { CareerTimeline } from "./components/career-timeline";
 import { ImageWithFallback } from "./components/figma/ImageWithFallback";
 
-const HERO_IMG = "/Profie.webp";
+const HERO_IMG = "/airplane.webp";
 export default function App() {
   const [dark, setDark] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -237,7 +237,7 @@ export default function App() {
                 pushVector={[1.5, -2.0]}
               />
               <ParticleImage
-                src="/IG.webp"
+                src="/bridge.webp"
                 width={5.6}
                 height={4.2}
                 containerRef={overlayContainerRef}
@@ -292,7 +292,7 @@ export default function App() {
               className={`group relative aspect-[4/3] overflow-visible rounded-[2rem] transition-all duration-500 ${isOverlayShattering ? 'bg-transparent shadow-none' : 'bg-muted shadow-2xl shadow-black/10 hover:shadow-[0_30px_60px_rgba(0,0,0,0.2)]'}`}
             >
               <ImageWithFallback 
-                src="/IG.webp"
+                src="/bridge.webp"
                 alt="Static Port"
                 className={`absolute inset-0 h-full w-full object-cover rounded-[2rem] transition-opacity duration-300 ease-in-out ${isOverlayShattering ? 'opacity-0' : 'opacity-100'}`}
               />
