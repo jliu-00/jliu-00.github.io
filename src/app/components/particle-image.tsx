@@ -14,6 +14,7 @@ uniform vec2 uPushDir;
 uniform vec2 uMouse;
 uniform vec2 uUvScale;
 uniform float uDensity;
+uniform sampler2D uTexture;
 
 varying vec2 vUv;
 varying vec2 vOriginalUv;
@@ -34,10 +35,16 @@ void main() {
   
   vec3 pos = position;
   
-  // Per-particle staggered convergence
-  float arriveT = hash(uv + 0.3);
-  float pStart = arriveT * 0.3;
-  float pEnd = pStart + 0.7;
+  // Per-particle staggered convergence (Ink-like effect based on luminance)
+  vec4 texColorVert = texture2D(uTexture, vUv);
+  float vertLuminance = dot(texColorVert.rgb, vec3(0.299, 0.587, 0.114));
+  
+  // Dark areas assemble first, bright areas assemble later.
+  // Add 30% random noise so it doesn't look like a perfectly flat gradient.
+  float arriveT = mix(vertLuminance, hash(uv + 0.3), 0.3);
+  
+  float pStart = arriveT * 0.4;
+  float pEnd = pStart + 0.6;
   float particleProgress = smoothstep(pStart, pEnd, uConverge);
   float pp = 1.0 - particleProgress;
   float eased = 1.0 - pp * pp * pp;
