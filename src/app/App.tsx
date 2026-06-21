@@ -230,7 +230,7 @@ export default function App() {
                 height={5.6}
                 containerRef={baseContainerRef}
                 enableHover={false}
-                density={deviceType === 'mobile' ? 70 : 100}
+                density={deviceType === 'mobile' ? 60 : 100}
                 onSettled={handleParticleSettled}
                 scrollYProgress={scrollYProgress}
                 // right image: gentle push right
@@ -244,7 +244,7 @@ export default function App() {
                 enableHover={false}
                 // IG.jpg is landscape (4:3 aspect ratio). To match the ~13,300 total particles of the portrait image,
                 // we need a higher X-axis density (130 * (130 * 0.75) ≈ 12,600).
-                density={deviceType === 'mobile' ? 90 : 130}
+                density={deviceType === 'mobile' ? 80 : 130}
                 onSettled={handleParticleSettled}
                 scrollYProgress={scrollYProgress}
                 // left image: moderate push left. Since force is now driven by shatterProgress, this is enough to clear the center immediately.
