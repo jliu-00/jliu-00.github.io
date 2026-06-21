@@ -11,6 +11,15 @@ const CareerTimeline = lazy(() => import("./components/career-timeline").then(m 
 const TintWordCTA = lazy(() => import("./components/tintword-cta").then(m => ({ default: m.TintWordCTA })));
 const ParticleScene = lazy(() => import("./components/particle-scene").then(m => ({ default: m.ParticleScene })));
 
+const DelayedMount = ({ children, delay }: { children: React.ReactNode, delay: number }) => {
+  const [shouldMount, setShouldMount] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setShouldMount(true), delay);
+    return () => clearTimeout(timer);
+  }, [delay]);
+  return shouldMount ? <>{children}</> : null;
+};
+
 const HERO_IMG = "/airplane.webp";
 export default function App() {
   const [dark, setDark] = useState(() => {
@@ -210,16 +219,19 @@ export default function App() {
 
         {/* Single hero-level canvas for all particle effects */}
         <div className={`fixed inset-0 z-[3] pointer-events-none transition-opacity duration-300 ease-in-out ${isCanvasVisible ? 'opacity-100' : 'opacity-0'}`}>
-          <Suspense fallback={null}>
-            <ParticleScene
-              deviceType={deviceType}
-              scrollYProgress={scrollYProgress}
-              handleParticleSettled={handleParticleSettled}
-              baseContainerRef={baseContainerRef}
-              overlayContainerRef={overlayContainerRef}
-              heroImg={HERO_IMG}
-            />
-          </Suspense>
+          <DelayedMount delay={100}>
+            <Suspense fallback={null}>
+              <ParticleScene
+                deviceType={deviceType}
+                scrollYProgress={scrollYProgress}
+                handleParticleSettled={handleParticleSettled}
+                baseContainerRef={baseContainerRef}
+                overlayContainerRef={overlayContainerRef}
+                heroImg={HERO_IMG}
+                isCanvasVisible={isCanvasVisible}
+              />
+            </Suspense>
+          </DelayedMount>
         </div>
 
         {/* Editorial Overlapping Collage */}

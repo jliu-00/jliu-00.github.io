@@ -10,11 +10,12 @@ interface ParticleSceneProps {
   baseContainerRef: React.RefObject<HTMLDivElement | null>;
   overlayContainerRef: React.RefObject<HTMLDivElement | null>;
   heroImg: string;
+  isCanvasVisible: boolean;
 }
 
-export const ParticleScene = ({ deviceType, scrollYProgress, handleParticleSettled, baseContainerRef, overlayContainerRef, heroImg }: ParticleSceneProps) => {
+export const ParticleScene = ({ deviceType, scrollYProgress, handleParticleSettled, baseContainerRef, overlayContainerRef, heroImg, isCanvasVisible }: ParticleSceneProps) => {
   return (
-    <Canvas frameloop="always" style={{ pointerEvents: 'none' }} dpr={deviceType === 'desktop' ? [1, 1.5] : 1} camera={{ position: [0, 0, 35], fov: 50 }} gl={{ powerPreference: "high-performance", antialias: false }}>
+    <Canvas frameloop={isCanvasVisible ? "always" : "demand"} style={{ pointerEvents: 'none' }} dpr={deviceType === 'desktop' ? [1, 1.5] : 1} camera={{ position: [0, 0, 35], fov: 50 }} gl={{ powerPreference: "high-performance", antialias: false }}>
       <Suspense fallback={null}>
         <ParticleImage
           src={heroImg}

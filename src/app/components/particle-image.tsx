@@ -311,6 +311,8 @@ export function ParticleImage({ src, width = 4, height = 5, density = 500, scale
     // Dynamic positioning: compute world-space position/scale from DOM rects
     if (containerRef?.current && groupRef.current) {
       const tr = containerRef.current.getBoundingClientRect();
+      const canvasEl = state.gl.domElement;
+      const cr = canvasEl.getBoundingClientRect();
 
       const cam = state.camera as THREE.PerspectiveCamera;
       const vFov = cam.fov * Math.PI / 180;
@@ -319,20 +321,20 @@ export function ParticleImage({ src, width = 4, height = 5, density = 500, scale
       const vW = vH * cam.aspect;
 
       // Container center in normalized canvas coords (0 = left/top, 1 = right/bottom)
-      const nx = (tr.left + tr.width / 2) / state.size.width;
+      const nx = (tr.left + tr.width / 2) / cr.width;
       
       // When the image shatters, we want to detach the particles from the DOM's upward scroll
       // so they don't get dragged thousands of pixels above the screen.
       const shatterRatio = 1.0 - (shaderRef.current.uniforms.uConverge.value || 0);
       const scrollCompensationPixels = window.scrollY * shatterRatio;
-      const compensatedNy = (tr.top + scrollCompensationPixels + tr.height / 2) / state.size.height;
+      const compensatedNy = (tr.top + scrollCompensationPixels + tr.height / 2) / cr.height;
 
       // Convert to world space (Y flipped)
       groupRef.current.position.x = (nx - 0.5) * vW;
       groupRef.current.position.y = -(compensatedNy - 0.5) * vH;
 
       // Scale so the plane matches the container's visual size
-      const containerWorldH = (tr.height / state.size.height) * vH;
+      const containerWorldH = (tr.height / cr.height) * vH;
       groupRef.current.scale.setScalar(containerWorldH / height);
     }
   });
