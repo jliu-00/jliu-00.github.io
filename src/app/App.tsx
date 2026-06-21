@@ -143,7 +143,7 @@ export default function App() {
 
 
 
-  const [isCanvasVisible, setIsCanvasVisible] = useState(false);
+  const [isCanvasVisible, setIsCanvasVisible] = useState(true);
   const settledCount = useRef(0);
   const totalParticleImages = 2; // Portrait + Landscape
   

@@ -198,9 +198,9 @@ export function ParticleImage({ src, width = 4, height = 5, density = 500, scale
     }
   }, [density]);
 
-  const currentShatter = useRef(0);
+  const currentShatter = useRef(6.0); // Start scattered for entrance effect
   const lastScrollY = useRef(typeof window !== 'undefined' ? window.scrollY : 0);
-  const wasShattered = useRef(false);
+  const wasShattered = useRef(true); // Ensure onSettled fires after initial convergence
   const stoppedFrames = useRef(0);
   const convergeTimer = useRef(0);
   const isConverging = useRef(false);
