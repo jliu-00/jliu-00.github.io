@@ -3,7 +3,7 @@ import { motion, useScroll, useTransform } from "motion/react";
 import { CustomCursor } from "./components/custom-cursor";
 import { Github, Linkedin, Instagram, Moon, Sun, ArrowDown } from "lucide-react";
 import { MagneticPin } from "./components/magnetic-pin";
-import { ScrambledText } from "./components/scrambled-text";
+import { BlurRevealText } from "./components/blur-reveal-text";
 import { XiaohongshuIcon } from "./components/icons";
 import { ImageWithFallback } from "./components/figma/ImageWithFallback";
 
@@ -347,8 +347,8 @@ export default function App() {
             className="font-serif leading-[0.84] tracking-[-0.03em]"
             style={{ fontSize: "clamp(3.4rem, 13vw, 12rem)", fontWeight: 300 }}
           >
-            <ScrambledText text="Jiahong" className="block" delayMs={100} durationMs={1000} />
-            <ScrambledText text="Liu" className="block italic md:ml-[14%]" delayMs={400} durationMs={1000} />
+            <BlurRevealText text="Jiahong" className="block" delayMs={100} durationMs={3000} />
+            <BlurRevealText text="Liu" className="block italic md:ml-[14%]" delayMs={400} durationMs={3000} />
           </h1>
         </motion.div>
 
