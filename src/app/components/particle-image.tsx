@@ -22,6 +22,7 @@ varying vec2 vOriginalUv;
 varying float vConvergeFactor;
 varying float vStarBrightness;
 varying float vAlphaDecay;
+varying float vArriveT;
 
 float hash(vec2 p) {
   p = p * vec2(1234.56, 789.12);
@@ -40,19 +41,26 @@ void main() {
   vec4 texColorVert = texture2D(uTexture, vUv);
   float vertLuminance = dot(texColorVert.rgb, vec3(0.299, 0.587, 0.114));
   
-  // Dark areas assemble first, bright areas assemble later.
-  // Reduce random noise to 15% so the structural shape (bridge) is much more pronounced
-  float arriveT = mix(vertLuminance, hash(uv + 0.3), 0.15);
+  // Push the contrast so the bridge becomes strictly 0.0 and the sky becomes 1.0
+  // This ensures they are pushed to the absolute extremes of the timeline
+  float contrastLuminance = smoothstep(0.1, 0.6, vertLuminance);
   
-  // Widen the gap: darks finish by 0.3, lights don't even start until 0.7
-  float pStart = arriveT * 0.7;
-  float pEnd = pStart + 0.3;
+  // Dark areas assemble first, bright areas assemble later.
+  // Reduce random noise to 10% so the structural shape (bridge) is almost perfectly sharp
+  float arriveT = mix(contrastLuminance, hash(uv + 0.3), 0.1);
+  
+  // ALL particles start moving back IMMEDIATELY when the animation begins.
+  float pStart = 0.0;
+  
+  // But they finish at different times (different speeds).
+  // arriveT=0.0 (bridge): finishes at 0.6 (gives it more than half the timeline, much smoother).
+  // arriveT=1.0 (sky): finishes late at 1.0 (moves very slowly).
+  float pEnd = mix(0.6, 1.0, arriveT);
+  
   float particleProgress = smoothstep(pStart, pEnd, uConverge);
   
-  // pp goes from 1.0 (scattered) to 0.0 (converged)
-  float pp = 1.0 - particleProgress;
-  // easeOutCubic
-  float eased = 1.0 - pp * pp * pp;
+  vArriveT = arriveT;
+  
   // convergeFactor is 1.0 when scattered, 0.0 when converged
   float convergeFactor = 1.0 - particleProgress;
   
@@ -130,14 +138,16 @@ varying vec2 vUv;
 varying vec2 vOriginalUv;
 varying float vConvergeFactor;
 varying float vStarBrightness;
+varying float vArriveT;
 
 void main() {
   vec4 texColor = texture2D(uTexture, vUv);
   
   // Calculate alpha threshold for darkness
+  // We reduce the fade threshold so dark particles (like the bridge) are more opaque and visible
   float luminance = dot(texColor.rgb, vec3(0.299, 0.587, 0.114));
   float isDark = 1.0 - luminance;
-  float alphaThreshold = smoothstep(0.0, 0.3, isDark) * 0.7;
+  float alphaThreshold = smoothstep(0.0, 0.3, isDark) * 0.2; // Only fade up to 20% max
   float fadeAlpha = 1.0 - alphaThreshold;
   
   if (texColor.a * fadeAlpha < 0.01) discard;
@@ -174,10 +184,20 @@ void main() {
   float minAlphaFloor = mix(0.15, 0.8, vStarBrightness);
   float scrollAlpha = mix(1.0, minAlphaFloor, alphaDecay);
   
+  // Constellation Glow: Dark structure particles (vArriveT < 0.5) glow brightly when they assemble early!
+  // The glow is strongest when they first assemble, and fades out as the rest of the image (uConverge -> 1.0) fills in.
+  float isAssembled = 1.0 - isScattered;
+  float structureGlow = smoothstep(0.5, 0.0, vArriveT) * isAssembled * (1.0 - uConverge) * 1.5;
+  
+  vec3 finalColor = mix(texColor.rgb, vec3(1.0, 1.0, 1.0), min(structureGlow, 1.0));
+  
   float finalAlpha = texColor.a * fadeAlpha * glow * scrollAlpha * flicker;
+  // Boost alpha for the glowing structure so it ignores the darkness fade and pops out clearly
+  finalAlpha = max(finalAlpha, min(structureGlow, 1.0));
+  
   if (finalAlpha < 0.01) discard;
   
-  gl_FragColor = vec4(texColor.rgb, finalAlpha);
+  gl_FragColor = vec4(finalColor, finalAlpha);
 }
 `;
 

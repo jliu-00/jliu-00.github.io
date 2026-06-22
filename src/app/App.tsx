@@ -259,7 +259,7 @@ export default function App() {
                 className={`absolute inset-0 h-full w-full object-cover rounded-[2rem] transition-opacity duration-300 ease-in-out ${isBaseShattering ? 'opacity-0' : 'opacity-100'}`}
               />
               {/* Dark mode intelligent dimmer */}
-              <div className={`pointer-events-none absolute inset-0 z-10 rounded-[2rem] bg-black/0 transition-all duration-[1500ms] dark:group-hover:bg-black/0 ${isBaseShattering ? 'opacity-0' : 'dark:bg-black/30 opacity-100'}`} />
+              <div className={`pointer-events-none absolute inset-0 z-10 rounded-[2rem] bg-black/0 transition-all duration-300 dark:group-hover:bg-black/0 ${isBaseShattering ? 'opacity-0' : 'dark:bg-black/30 opacity-100'}`} />
             </div>
           </motion.div>
 
@@ -281,7 +281,7 @@ export default function App() {
                 className={`absolute inset-0 h-full w-full object-cover rounded-[2rem] transition-opacity duration-300 ease-in-out ${isOverlayShattering ? 'opacity-0' : 'opacity-100'}`}
               />
               {/* Dark mode intelligent dimmer */}
-              <div className={`pointer-events-none absolute inset-0 z-10 rounded-[2rem] bg-black/0 transition-all duration-[1500ms] dark:group-hover:bg-black/0 ${isOverlayShattering ? 'opacity-0' : 'dark:bg-black/30 opacity-100'}`} />
+              <div className={`pointer-events-none absolute inset-0 z-10 rounded-[2rem] bg-black/0 transition-all duration-300 dark:group-hover:bg-black/0 ${isOverlayShattering ? 'opacity-0' : 'dark:bg-black/30 opacity-100'}`} />
             </div>
           </motion.div>
 
