@@ -278,11 +278,7 @@ export function CareerTimeline() {
 
         {/* read-out — stable centered block in normal flow, never edge-squeezed.
             Reserves its own height so it can't collide with the footer. */}
-        <motion.div 
-          layout 
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="pointer-events-none relative mt-9 grid justify-items-center items-start md:min-h-[180px]"
-        >
+        <div className="pointer-events-none relative mt-9 grid justify-items-center items-start md:min-h-[180px]">
           <AnimatePresence>
             {active && liveEntries.length > 0 ? (
               <motion.div
@@ -341,7 +337,7 @@ export function CareerTimeline() {
               </motion.span>
             )}
           </AnimatePresence>
-        </motion.div>
+        </div>
       </div>
     </section>
   );
