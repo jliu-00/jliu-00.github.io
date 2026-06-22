@@ -16,16 +16,20 @@ export function BlurRevealText({ text, durationMs = 3000, delayMs = 0, className
         y: 15,
         scale: 0.98,
         letterSpacing: "0.05em",
-        // 核心改动：用老式放映机的光学滤镜替代 SVG 噪点
-        // blur + 高对比度 + 泛黄(sepia) 会产生一种“胶片烧录”或“老镜头失焦”的质感
-        filter: "blur(16px) sepia(100%) contrast(300%) saturate(200%) brightness(70%)"
+        filter: "blur(12px)",
+        // 核心改动：由于纯黑/纯白文字对 sepia 等滤镜不敏感，
+        // 这里改用“色差（Chromatic Aberration）”来模拟老旧镜头或老旧放映机的失焦感。
+        // 红蓝边缘分离，在失焦时产生极强的复古光学感。
+        textShadow: "15px 5px 20px rgba(255, 0, 0, 0.6), -15px -5px 20px rgba(0, 255, 255, 0.6)"
       }}
       animate={{ 
         opacity: 1, 
         y: 0,
         scale: 1,
         letterSpacing: "inherit",
-        filter: "blur(0px) sepia(0%) contrast(100%) saturate(100%) brightness(100%)"
+        filter: "blur(0px)",
+        // 对焦完成后，红蓝色散完美收拢，变成清晰的文字
+        textShadow: "0px 0px 0px rgba(255, 0, 0, 0), 0px 0px 0px rgba(0, 255, 255, 0)"
       }}
       transition={{
         duration: durationMs / 1000,

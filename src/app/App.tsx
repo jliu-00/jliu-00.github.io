@@ -405,9 +405,14 @@ export default function App() {
           >
             Let's connect ↗
           </a>
-          <p className="font-mono uppercase tracking-[0.2em] text-muted-foreground" style={{ fontSize: 11 }}>
-            Jiahong&nbsp;Liu&nbsp;©&nbsp;2026
-          </p>
+          <div className="flex flex-col gap-1 md:items-end">
+            <p className="font-mono uppercase tracking-[0.2em] text-muted-foreground" style={{ fontSize: 11 }}>
+              Based in Berlin, Germany
+            </p>
+            <p className="font-mono uppercase tracking-[0.2em] text-muted-foreground" style={{ fontSize: 11 }}>
+              Jiahong&nbsp;Liu&nbsp;©&nbsp;2026
+            </p>
+          </div>
         </div>
       </footer>
     </div>
