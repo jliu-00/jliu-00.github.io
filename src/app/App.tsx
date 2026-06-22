@@ -31,7 +31,7 @@ export default function App() {
     }
     return false;
   });
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLElement>(null);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
@@ -178,7 +178,7 @@ export default function App() {
   const buttonsY = useTransform(scrollYProgress, [0, 1], [0, 300]);
 
   return (
-    <div
+    <main
       ref={ref}
       className="relative flex min-h-screen w-full flex-col overflow-hidden bg-background text-foreground transition-colors duration-1000 ease-in-out"
       style={{ cursor: "none" }}
@@ -415,6 +415,6 @@ export default function App() {
           </div>
         </div>
       </footer>
-    </div>
+    </main>
   );
 }

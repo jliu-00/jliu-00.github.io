@@ -93,7 +93,7 @@ export function TintWordCTA() {
             className="group inline-flex items-center gap-3 border-b border-foreground/30 pb-2 transition-colors hover:border-accent"
           >
             <span className="font-mono uppercase tracking-[0.2em]" style={{ fontSize: 13 }}>
-              Learn more
+              Visit TintWord
             </span>
             <ArrowUpRight
               size={20}
