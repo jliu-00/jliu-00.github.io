@@ -40,6 +40,11 @@ export function MagneticPin({ href, label, icon, tilt = 0, className = "", x: in
   const shadowDX = useMotionValue(0);
   const shadowDY = useMotionValue(6); // Default static shadow Y
   const shadowBlur = useMotionValue(14); // Default static blur
+  const shadowOpacity = useMotionValue(0.15); // Default static opacity
+  
+  const lightX = useMotionValue(50);
+  const lightY = useMotionValue(50);
+  const lightOpacity = useMotionValue(0.1);
 
   useEffect(() => {
     if (!ref.current) return;
@@ -86,6 +91,25 @@ export function MagneticPin({ href, label, icon, tilt = 0, className = "", x: in
       shadowDX.set((dx / (dist || 1)) * easedFactor * 30);
       shadowDY.set((dy / (dist || 1)) * easedFactor * 30);
       shadowBlur.set(10 + easedFactor * 25);
+      
+      // Weaken shadow when mouse is far away
+      shadowOpacity.set(0.4 - factor * 0.35); // 0.4 when close, 0.05 when far
+
+      // Light effect for matte/leather surface
+      const mouseX = pageX - centerXPage;
+      const mouseY = pageY - centerYPage;
+      const maxRadius = 35; // Light center max offset from center
+      const lightRadius = Math.min(dist, maxRadius);
+      const angle = Math.atan2(mouseY, mouseX);
+      const lx = 50 + (Math.cos(angle) * lightRadius / 29) * 50;
+      const ly = 50 + (Math.sin(angle) * lightRadius / 29) * 50;
+      
+      lightX.set(lx);
+      lightY.set(ly);
+      
+      // Dynamic opacity: brighter when closer
+      const proximityOpacity = Math.max(0, 1 - dist / 400);
+      lightOpacity.set(0.1 + proximityOpacity * 0.35);
     };
     
     window.addEventListener("mousemove", handleMove, { passive: true });
@@ -100,7 +124,8 @@ export function MagneticPin({ href, label, icon, tilt = 0, className = "", x: in
     };
   }, []);
 
-  const dynamicBoxShadow = useMotionTemplate`inset 0 1px 1px rgba(255,255,255,0.7), inset 0 -2px 4px rgba(0,0,0,0.28), ${shadowDX}px ${shadowDY}px ${shadowBlur}px rgba(0,0,0,0.35)`;
+  const dynamicBoxShadow = useMotionTemplate`inset 0 1px 1px rgba(255,255,255,0.7), inset 0 -2px 4px rgba(0,0,0,0.28), ${shadowDX}px ${shadowDY}px ${shadowBlur}px rgba(0,0,0,${shadowOpacity})`;
+  const lightBackground = useMotionTemplate`radial-gradient(circle at ${lightX}% ${lightY}%, rgba(255, 255, 255, ${lightOpacity}), transparent 75%)`;
 
   // Combine drag x/y with gyro offset for rendering
   const renderX = useTransform([x, gyroX], ([bx, gx]) => (bx as number) + (gx as number));
@@ -174,6 +199,12 @@ export function MagneticPin({ href, label, icon, tilt = 0, className = "", x: in
             boxShadow: dynamicBoxShadow,
           }}
         >
+          {/* moving highlight layer */}
+          <motion.span
+            className="absolute inset-0 rounded-full pointer-events-none"
+            style={{ background: lightBackground }}
+          />
+
           {/* knurled bezel ring */}
           <span
             className="absolute inset-[3px] rounded-full"
