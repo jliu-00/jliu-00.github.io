@@ -24,7 +24,7 @@ export const ParticleScene = ({ deviceType, scrollYProgress, handleParticleSettl
           height={5.6}
           containerRef={baseContainerRef}
           enableHover={false}
-          density={deviceType === 'mobile' ? 50 : 100}
+          density={deviceType === 'mobile' ? 50 : 90}
           onSettled={handleParticleSettled}
           scrollYProgress={scrollYProgress}
           pushVector={[1.5, -2.0]}
@@ -35,10 +35,10 @@ export const ParticleScene = ({ deviceType, scrollYProgress, handleParticleSettl
           height={4.2}
           containerRef={overlayContainerRef}
           enableHover={false}
-          density={deviceType === 'mobile' ? 67 : 130}
+          density={deviceType === 'mobile' ? 67 : 117}
           onSettled={handleParticleSettled}
           scrollYProgress={scrollYProgress}
-          pushVector={[-2.0, -2.0]}
+          pushVector={[-4.0, -2.0]}
         />
       </Suspense>
     </Canvas>

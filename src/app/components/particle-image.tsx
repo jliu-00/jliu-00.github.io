@@ -104,16 +104,19 @@ void main() {
   float scrollForceX = globalShatter * 0.6;
   float scrollForceY = uScrollProgress * 0.5;
   
-  float emberDriftY = (hash(uv + 0.8) - 0.3) * uTime * 0.5 * localShatter;
+  float emberDriftY = (hash(uv + 0.8) - 0.3) * uTime * 0.15 * localShatter;
   
   float lateralConstraint = mix(1.0, 0.6, smoothstep(0.0, 0.2, uScrollProgress));
-  
-  float windX = (cos(randomAngle) * speed - radius * 1.0) * lateralConstraint + uPushDir.x * scrollForceX;
+  float localWindX = (cos(randomAngle) * speed - radius * 1.0) * lateralConstraint;
   float windY = sin(randomAngle) * speed + emberDriftY + uPushDir.y * scrollForceY;
   float windZ = (hash(uv + 0.2) - 0.5) * 0.6;
   
-  // Multiply by localShatter instead of global shatterAmount
-  pos.x += windX * shatterAmount;
+  // Non-linear compression: keeps the -4.0 speed at the start of scroll, but prevents the particles from exceeding max distance and disappearing
+  float rawPushDispX = uPushDir.x * scrollForceX * shatterAmount;
+  float maxPushDispX = 18.0;
+  float compressedPushDispX = sign(rawPushDispX) * maxPushDispX * (1.0 - exp(-abs(rawPushDispX) / maxPushDispX));
+  
+  pos.x += localWindX * shatterAmount + compressedPushDispX;
   pos.y += windY * shatterAmount;
   pos.z += windZ * shatterAmount;
   
@@ -270,6 +273,7 @@ export function ParticleImage({ src, width = 4, height = 5, density = 500, scale
 
   const entranceTimer = useRef(0);
   const isEntrance = useRef(true); // Start with entrance animation
+  const bounceProgress = useRef(-1); // -1 means not bouncing
   const CONVERGE_DURATION = 2.5;
   
   const onSettledRef = useRef(onSettled);
@@ -302,11 +306,16 @@ export function ParticleImage({ src, width = 4, height = 5, density = 500, scale
     if (isEntrance.current && window.scrollY < 10) {
       entranceTimer.current += delta;
       targetConverge = Math.min(entranceTimer.current / CONVERGE_DURATION, 1.0);
-      shaderRef.current.uniforms.uConverge.value = targetConverge;
       
-      if (targetConverge >= 1.0) {
+      // Trigger the bounce slightly early to prevent any perceived delay
+      if (targetConverge >= 0.95) {
         isEntrance.current = false;
-        onSettledRef.current?.();
+        shaderRef.current.uniforms.uConverge.value = 1.0; // Snap the rest of the way to start bounce cleanly
+        if (bounceProgress.current === -1) {
+           bounceProgress.current = 0.0;
+        }
+      } else {
+        shaderRef.current.uniforms.uConverge.value = targetConverge;
       }
     } else {
       isEntrance.current = false; // Ensure it's off if we broke out due to scrolling
@@ -314,7 +323,12 @@ export function ParticleImage({ src, width = 4, height = 5, density = 500, scale
       // Post-entrance: Converge state is strictly mapped to scroll position
       // Shatter completes within the first 600px of scrolling (before timeline)
       const shatterScrollRange = 600.0;
-      targetConverge = 1.0 - Math.min(window.scrollY / shatterScrollRange, 1.0);
+      const linearProgress = 1.0 - Math.min(window.scrollY / shatterScrollRange, 1.0);
+      
+      // Apply a gentler non-linear curve (power of 1.5 instead of 3.0).
+      // This maintains the resistance to reassembly, but reduces the steepness at the end
+      // so the particles don't snap back too abruptly when reaching the top.
+      targetConverge = Math.pow(linearProgress, 1.5);
       
       const currentConverge = shaderRef.current.uniforms.uConverge.value;
       
@@ -324,15 +338,35 @@ export function ParticleImage({ src, width = 4, height = 5, density = 500, scale
         shaderRef.current.uniforms.uConverge.value = THREE.MathUtils.lerp(currentConverge, targetConverge, Math.min(delta * 12.0, 1.0));
       } else if (targetConverge > currentConverge) {
         // Scrolling UP (target is higher than current)
-        // Particles reassemble with moderate inertia (faster than before)
-        shaderRef.current.uniforms.uConverge.value = THREE.MathUtils.lerp(currentConverge, targetConverge, Math.min(delta * 3.0, 1.0));
+        // Particles reassemble with strong inertia to simulate "resistance" against going back
+        shaderRef.current.uniforms.uConverge.value = THREE.MathUtils.lerp(currentConverge, targetConverge, Math.min(delta * 1.2, 1.0));
         
-        // If we reached the top, trigger onSettled to crossfade back to static <img>
-        if (targetConverge === 1.0 && shaderRef.current.uniforms.uConverge.value > 0.99) {
+        // If we reached the top, start the bounce animation before settling
+        // Trigger at 0.95 to skip the infinitely long exponential lerp decay tail!
+        if (targetConverge === 1.0 && shaderRef.current.uniforms.uConverge.value > 0.95 && bounceProgress.current === -1) {
            shaderRef.current.uniforms.uConverge.value = 1.0;
-           onSettledRef.current?.();
+           bounceProgress.current = 0.0;
         }
       }
+    }
+    
+    // Handle Bounce Animation
+    let bounceScale = 1.0;
+    if (bounceProgress.current >= 0.0) {
+      bounceProgress.current += delta / 0.4; // 0.4s bounce duration (slightly snappier)
+      if (bounceProgress.current >= 1.0) {
+        bounceScale = 1.0;
+        bounceProgress.current = -1;
+        onSettledRef.current?.(); // Trigger DOM fade-in ONLY after bounce finishes
+      } else {
+        // Smooth sine curve: 0 -> 1 -> 0
+        // We shrink by 4% to create a "getting denser" feeling, then spring back
+        const bounceAmount = Math.sin(bounceProgress.current * Math.PI);
+        bounceScale = 1.0 - 0.04 * bounceAmount;
+      }
+    } else if (targetConverge < 1.0 && !isEntrance.current) {
+      // Reset if user scrolls down during or after bounce
+      bounceProgress.current = -1;
     }
     
     if (hovered) {
@@ -366,9 +400,9 @@ export function ParticleImage({ src, width = 4, height = 5, density = 500, scale
       groupRef.current.position.x = (nx - 0.5) * vW;
       groupRef.current.position.y = -(compensatedNy - 0.5) * vH;
 
-      // Scale so the plane matches the container's visual size
+      // Scale so the plane matches the container's visual size, multiplied by bounce animation
       const containerWorldH = (tr.height / cr.height) * vH;
-      groupRef.current.scale.setScalar(containerWorldH / height);
+      groupRef.current.scale.setScalar((containerWorldH / height) * bounceScale);
     }
   });
 
